@@ -1,0 +1,625 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4D2068EE27480B6A00EB2982 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2068ED27480B6A00EB2982 /* AppDelegate.swift */; };
+		4D2068F027480B6A00EB2982 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2068EF27480B6A00EB2982 /* SceneDelegate.swift */; };
+		4D2068F227480B6A00EB2982 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2068F127480B6A00EB2982 /* ViewController.swift */; };
+		4D2068F527480B6A00EB2982 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D2068F327480B6A00EB2982 /* Main.storyboard */; };
+		4D2068F727480B6B00EB2982 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4D2068F627480B6B00EB2982 /* Assets.xcassets */; };
+		4D2068FA27480B6B00EB2982 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D2068F827480B6B00EB2982 /* LaunchScreen.storyboard */; };
+		4D20690527480B6B00EB2982 /* SeamCarvingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D20690427480B6B00EB2982 /* SeamCarvingTests.swift */; };
+		4D20690F27480B6B00EB2982 /* SeamCarvingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D20690E27480B6B00EB2982 /* SeamCarvingUITests.swift */; };
+		4D20691127480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D20691027480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift */; };
+		4D9FBB7C27498A0F0085E339 /* kernel.metal in Sources */ = {isa = PBXBuildFile; fileRef = 4D9FBB7B27498A0F0085E339 /* kernel.metal */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4D20690127480B6B00EB2982 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4D2068E227480B6A00EB2982 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4D2068E927480B6A00EB2982;
+			remoteInfo = SeamCarving;
+		};
+		4D20690B27480B6B00EB2982 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4D2068E227480B6A00EB2982 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4D2068E927480B6A00EB2982;
+			remoteInfo = SeamCarving;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		4D2068EA27480B6A00EB2982 /* SeamCarving.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SeamCarving.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D2068ED27480B6A00EB2982 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		4D2068EF27480B6A00EB2982 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		4D2068F127480B6A00EB2982 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		4D2068F427480B6A00EB2982 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		4D2068F627480B6B00EB2982 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		4D2068F927480B6B00EB2982 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		4D2068FB27480B6B00EB2982 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4D20690027480B6B00EB2982 /* SeamCarvingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeamCarvingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D20690427480B6B00EB2982 /* SeamCarvingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeamCarvingTests.swift; sourceTree = "<group>"; };
+		4D20690A27480B6B00EB2982 /* SeamCarvingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeamCarvingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D20690E27480B6B00EB2982 /* SeamCarvingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeamCarvingUITests.swift; sourceTree = "<group>"; };
+		4D20691027480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeamCarvingUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		4D9FBB7B27498A0F0085E339 /* kernel.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = kernel.metal; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4D2068E727480B6A00EB2982 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D2068FD27480B6B00EB2982 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D20690727480B6B00EB2982 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4D2068E127480B6A00EB2982 = {
+			isa = PBXGroup;
+			children = (
+				4D2068EC27480B6A00EB2982 /* SeamCarving */,
+				4D20690327480B6B00EB2982 /* SeamCarvingTests */,
+				4D20690D27480B6B00EB2982 /* SeamCarvingUITests */,
+				4D2068EB27480B6A00EB2982 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4D2068EB27480B6A00EB2982 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4D2068EA27480B6A00EB2982 /* SeamCarving.app */,
+				4D20690027480B6B00EB2982 /* SeamCarvingTests.xctest */,
+				4D20690A27480B6B00EB2982 /* SeamCarvingUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4D2068EC27480B6A00EB2982 /* SeamCarving */ = {
+			isa = PBXGroup;
+			children = (
+				4D2068ED27480B6A00EB2982 /* AppDelegate.swift */,
+				4D9FBB7B27498A0F0085E339 /* kernel.metal */,
+				4D2068EF27480B6A00EB2982 /* SceneDelegate.swift */,
+				4D2068F127480B6A00EB2982 /* ViewController.swift */,
+				4D2068F327480B6A00EB2982 /* Main.storyboard */,
+				4D2068F627480B6B00EB2982 /* Assets.xcassets */,
+				4D2068F827480B6B00EB2982 /* LaunchScreen.storyboard */,
+				4D2068FB27480B6B00EB2982 /* Info.plist */,
+			);
+			path = SeamCarving;
+			sourceTree = "<group>";
+		};
+		4D20690327480B6B00EB2982 /* SeamCarvingTests */ = {
+			isa = PBXGroup;
+			children = (
+				4D20690427480B6B00EB2982 /* SeamCarvingTests.swift */,
+			);
+			path = SeamCarvingTests;
+			sourceTree = "<group>";
+		};
+		4D20690D27480B6B00EB2982 /* SeamCarvingUITests */ = {
+			isa = PBXGroup;
+			children = (
+				4D20690E27480B6B00EB2982 /* SeamCarvingUITests.swift */,
+				4D20691027480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift */,
+			);
+			path = SeamCarvingUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4D2068E927480B6A00EB2982 /* SeamCarving */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D20691427480B6B00EB2982 /* Build configuration list for PBXNativeTarget "SeamCarving" */;
+			buildPhases = (
+				4D2068E627480B6A00EB2982 /* Sources */,
+				4D2068E727480B6A00EB2982 /* Frameworks */,
+				4D2068E827480B6A00EB2982 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SeamCarving;
+			productName = SeamCarving;
+			productReference = 4D2068EA27480B6A00EB2982 /* SeamCarving.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4D2068FF27480B6B00EB2982 /* SeamCarvingTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D20691727480B6B00EB2982 /* Build configuration list for PBXNativeTarget "SeamCarvingTests" */;
+			buildPhases = (
+				4D2068FC27480B6B00EB2982 /* Sources */,
+				4D2068FD27480B6B00EB2982 /* Frameworks */,
+				4D2068FE27480B6B00EB2982 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4D20690227480B6B00EB2982 /* PBXTargetDependency */,
+			);
+			name = SeamCarvingTests;
+			productName = SeamCarvingTests;
+			productReference = 4D20690027480B6B00EB2982 /* SeamCarvingTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		4D20690927480B6B00EB2982 /* SeamCarvingUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D20691A27480B6B00EB2982 /* Build configuration list for PBXNativeTarget "SeamCarvingUITests" */;
+			buildPhases = (
+				4D20690627480B6B00EB2982 /* Sources */,
+				4D20690727480B6B00EB2982 /* Frameworks */,
+				4D20690827480B6B00EB2982 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4D20690C27480B6B00EB2982 /* PBXTargetDependency */,
+			);
+			name = SeamCarvingUITests;
+			productName = SeamCarvingUITests;
+			productReference = 4D20690A27480B6B00EB2982 /* SeamCarvingUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4D2068E227480B6A00EB2982 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1320;
+				LastUpgradeCheck = 1320;
+				TargetAttributes = {
+					4D2068E927480B6A00EB2982 = {
+						CreatedOnToolsVersion = 13.2;
+					};
+					4D2068FF27480B6B00EB2982 = {
+						CreatedOnToolsVersion = 13.2;
+						TestTargetID = 4D2068E927480B6A00EB2982;
+					};
+					4D20690927480B6B00EB2982 = {
+						CreatedOnToolsVersion = 13.2;
+						TestTargetID = 4D2068E927480B6A00EB2982;
+					};
+				};
+			};
+			buildConfigurationList = 4D2068E527480B6A00EB2982 /* Build configuration list for PBXProject "SeamCarving" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4D2068E127480B6A00EB2982;
+			productRefGroup = 4D2068EB27480B6A00EB2982 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4D2068E927480B6A00EB2982 /* SeamCarving */,
+				4D2068FF27480B6B00EB2982 /* SeamCarvingTests */,
+				4D20690927480B6B00EB2982 /* SeamCarvingUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4D2068E827480B6A00EB2982 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D2068FA27480B6B00EB2982 /* LaunchScreen.storyboard in Resources */,
+				4D2068F727480B6B00EB2982 /* Assets.xcassets in Resources */,
+				4D2068F527480B6A00EB2982 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D2068FE27480B6B00EB2982 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D20690827480B6B00EB2982 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4D2068E627480B6A00EB2982 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D9FBB7C27498A0F0085E339 /* kernel.metal in Sources */,
+				4D2068F227480B6A00EB2982 /* ViewController.swift in Sources */,
+				4D2068EE27480B6A00EB2982 /* AppDelegate.swift in Sources */,
+				4D2068F027480B6A00EB2982 /* SceneDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D2068FC27480B6B00EB2982 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D20690527480B6B00EB2982 /* SeamCarvingTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D20690627480B6B00EB2982 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D20690F27480B6B00EB2982 /* SeamCarvingUITests.swift in Sources */,
+				4D20691127480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4D20690227480B6B00EB2982 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4D2068E927480B6A00EB2982 /* SeamCarving */;
+			targetProxy = 4D20690127480B6B00EB2982 /* PBXContainerItemProxy */;
+		};
+		4D20690C27480B6B00EB2982 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4D2068E927480B6A00EB2982 /* SeamCarving */;
+			targetProxy = 4D20690B27480B6B00EB2982 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		4D2068F327480B6A00EB2982 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D2068F427480B6A00EB2982 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		4D2068F827480B6B00EB2982 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D2068F927480B6B00EB2982 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		4D20691227480B6B00EB2982 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		4D20691327480B6B00EB2982 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4D20691527480B6B00EB2982 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q5VB6NJ27N;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SeamCarving/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTLLINKER_FLAGS = "-fcikernel";
+				MTL_COMPILER_FLAGS = "-fcikernel";
+				PRODUCT_BUNDLE_IDENTIFIER = leanmaso.SeamCarving;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4D20691627480B6B00EB2982 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q5VB6NJ27N;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SeamCarving/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTLLINKER_FLAGS = "-fcikernel";
+				MTL_COMPILER_FLAGS = "-fcikernel";
+				PRODUCT_BUNDLE_IDENTIFIER = leanmaso.SeamCarving;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		4D20691827480B6B00EB2982 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q5VB6NJ27N;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = leanmaso.SeamCarvingTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SeamCarving.app/SeamCarving";
+			};
+			name = Debug;
+		};
+		4D20691927480B6B00EB2982 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Q5VB6NJ27N;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = leanmaso.SeamCarvingTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SeamCarving.app/SeamCarving";
+			};
+			name = Release;
+		};
+		4D20691B27480B6B00EB2982 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = leanmaso.SeamCarvingUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SeamCarving;
+			};
+			name = Debug;
+		};
+		4D20691C27480B6B00EB2982 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = leanmaso.SeamCarvingUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SeamCarving;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4D2068E527480B6A00EB2982 /* Build configuration list for PBXProject "SeamCarving" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D20691227480B6B00EB2982 /* Debug */,
+				4D20691327480B6B00EB2982 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4D20691427480B6B00EB2982 /* Build configuration list for PBXNativeTarget "SeamCarving" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D20691527480B6B00EB2982 /* Debug */,
+				4D20691627480B6B00EB2982 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4D20691727480B6B00EB2982 /* Build configuration list for PBXNativeTarget "SeamCarvingTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D20691827480B6B00EB2982 /* Debug */,
+				4D20691927480B6B00EB2982 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4D20691A27480B6B00EB2982 /* Build configuration list for PBXNativeTarget "SeamCarvingUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D20691B27480B6B00EB2982 /* Debug */,
+				4D20691C27480B6B00EB2982 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4D2068E227480B6A00EB2982 /* Project object */;
+}
