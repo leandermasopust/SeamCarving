@@ -154,18 +154,16 @@ var globalImg: CGImage? = nil
         globalImg = imageView.image!.cgImage!
         width = globalImg!.width
         height = globalImg!.height
-        var seam = [Int]()
-        var seamMap = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: width), count: height)
         if xReductionInput <= 0 {return}
         for _ in 1...xReductionInput {
             let timer1 = ParkBenchTimer()
             let energyMap = calculateEnergyMapX(inputIm: globalImg!)
             print("The EnergyMap took \(timer1.stop()) seconds.")
             let timer2 = ParkBenchTimer()
-            seamMap = calculateSeamMap(energyMap: energyMap)
+            let seamMap = calculateSeamMap(energyMap: energyMap)
             print("The SeamMap took \(timer2.stop()) seconds.")
             let timer3 = ParkBenchTimer()
-            seam = calculateSeam(seamMap: seamMap)
+            let seam = calculateSeam(seamMap: seamMap)
             print("The Seam took \(timer3.stop()) seconds.")
             let timer4 = ParkBenchTimer()
             _ = removeSeamWithoutShader(inputIm: globalImg!, seam:seam)
