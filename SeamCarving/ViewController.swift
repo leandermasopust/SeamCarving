@@ -109,32 +109,6 @@ class EnergyMapFilter: CIFilter {
     }
 }
 
-class SeamFilter: CIFilter {
-
-    private let kernel: CIKernel
-    var inputImage: CIImage?
-    var seam: [Int]
-    init(seamA: [Int]) {
-        let url = Bundle.main.url(forResource: "default", withExtension: "metallib")!
-        let data = try! Data(contentsOf: url)
-        kernel = try! CIKernel(functionName: "seam", fromMetalLibraryData: data)
-        seam = seamA
-        super.init()
-    }
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    func outputImage() -> CIImage? {
-        let sampler = CISampler.init(image:inputImage!)
-        guard let inputImage = inputImage else {return nil}
-        //TODO: REPLACE SECOND SAMPLER WITH SAMPLER OF SEAM PICTURE TO REMOVE SEAM
-        let buff = UnsafeBufferPointer(start: seam, count: seam.count)
-        let data = Data(buffer: buff)
-        let resultImage = kernel.apply(extent: inputImage.extent, roiCallback: {(index,rect)-> CGRect in return rect}, arguments: [sampler, data, inputImage.extent.width, inputImage.extent.height])
-        return resultImage
-    }
-}
-
 class ViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     @IBOutlet var  imageView: UIImageView!
     @IBOutlet var chooseButton: UIButton!
@@ -149,9 +123,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
         self.hideKeyboardWhenTappedAround()
-
     }
 
     @IBAction func btnClicked() {
@@ -175,7 +147,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
 var width = 0
 var height = 0
-var it = 0
 var globalImg: CGImage? = nil
     @IBAction func startCarving1() {
         let timer = ParkBenchTimer()
@@ -187,27 +158,6 @@ var globalImg: CGImage? = nil
         var seamMap = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: width), count: height)
         if xReductionInput <= 0 {return}
         for _ in 1...xReductionInput {
-/*
-            print(inputImage![0,0])
-            print(inputImage![1,0])
-            print(inputImage![2,0])
-            print(inputImage![3,0])
-            print(inputImage![4,0])
-            print(" ")
-
-            print(inputImage![0,1])
-            print(inputImage![1,1])
-            print(inputImage![2,1])
-            print(inputImage![3,1])
-            print(inputImage![4,1])
-            print(" ")
-
-            print(inputImage![0,2])
-            print(inputImage![1,2])
-            print(inputImage![2,2])
-            print(inputImage![3,2])
-            print(inputImage![4,2])
-            print(" ")*/
             let timer1 = ParkBenchTimer()
             let energyMap = calculateEnergyMapX(inputIm: globalImg!)
             print("The EnergyMap took \(timer1.stop()) seconds.")
@@ -217,23 +167,15 @@ var globalImg: CGImage? = nil
             let timer3 = ParkBenchTimer()
             seam = calculateSeam(seamMap: seamMap)
             print("The Seam took \(timer3.stop()) seconds.")
-            //let timerImage = ParkBenchTimer()
-            //inputImage = showImageWithSeam(inputImage: inputImage, seam:seam)
             let timer4 = ParkBenchTimer()
-            let inputImage = removeSeamWithoutShader(inputIm: globalImg!, seam:seam)
-            //let energyWithSeam = removeSeamWithoutShader(inputIm: energyMap, seam:seam)
+            _ = removeSeamWithoutShader(inputIm: globalImg!, seam:seam)
             print("The Removal of Seam took \(timer4.stop()) seconds.")
             width = width-1
-            it = it + 1
             labelX.text = "\(width)"
             labelY.text = "\(height)"
             imageView.image =  UIImage(cgImage: globalImg!)
-            //print(UIImage(cgImage: inputImage)[width-1,0])
             //showSeamMap(seamMap: seamMap)
         }
-        let resultSize = CGSize(width: (Int(width)), height: Int(height))
-
-
         print("The Carving took \(timer.stop()) seconds.")
 
     }
@@ -253,9 +195,7 @@ var globalImg: CGImage? = nil
                 let red = CIColor(color: energyMap[x,y]!).red
 
                 if(x == 0 || x == (width-1)) {
-                    //map[y][x] = min(min(map[y-1][Int(image.size.width)-1], map[y-1][x]),map[y-1][x+1]) + red
-
-                    // Temporal workaround for edges
+                    // workaround to avoid edge-cutting
                     map[y][x] = CGFloat.greatestFiniteMagnitude
                 }
                 else if(y == 0) {
@@ -284,16 +224,13 @@ var globalImg: CGImage? = nil
         let bytesPerPixel:Int = 4
         let bytesPerRow = 4 * columns
         let bitsPerComponent = 8
-        var dataSize =  columns * bytesPerPixel * rows
+        let dataSize =  columns * bytesPerPixel * rows
         var rawData = [UInt8](repeating: 0, count: Int(dataSize))
         let bitmapInfo = globalImg!.bitmapInfo.rawValue
-        print(bytesPerRow)
-        print(bytesPerRow)
         let context = CGContext(data: &rawData, width: columns, height: rows, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
 
         var byteIndex = 0
         // Iterate through pixels
-        var counter = 0
         while byteIndex < dataSize {
 
             // Get Column and Row of current pixel
@@ -328,7 +265,6 @@ var globalImg: CGImage? = nil
         let y = rows-1
         var min = CGFloat.greatestFiniteMagnitude
         var minIndex = -1
-        //print(seamMap[y])
         for x in 0...columns-1 {
             if(min > seamMap[y][x]) {
                 min = seamMap[y][x]
@@ -359,18 +295,7 @@ var globalImg: CGImage? = nil
             //print(minIndex)
             seamIndex[y] = minIndex
         }
-        print(seamIndex)
         return seamIndex
-    }
-    func showImageWithSeam(inputImage: CGImage,seam: [Int]) -> CGImage {
-        let inputImage = CIImage(cgImage: inputImage)
-        let context = CIContext(options: nil)
-        let filter = SeamFilter(seamA: seam)
-        filter.inputImage = inputImage
-        filter.seam = seam
-        let imageRef = context.createCGImage(filter.outputImage()!, from: inputImage.extent)
-        imageView.image = UIImage(cgImage: imageRef!)
-        return imageRef!
     }
 
     func cropLastColumn(image: CGImage) -> CGImage {
@@ -382,10 +307,9 @@ var globalImg: CGImage? = nil
     func removeSeamWithoutShader(inputIm: CGImage, seam:[Int]) -> CGImage {
         let image = inputIm
         let colorSpace = inputIm.colorSpace!
-        let bytesPerPixel:Int = 4
         let bytesPerRow = inputIm.bytesPerRow
         let bitsPerComponent = inputIm.bitsPerComponent
-        var dataSize =  inputIm.bytesPerRow * inputIm.height
+        let dataSize = inputIm.bytesPerRow * inputIm.height
         var rawData = [UInt8](repeating: 0, count: Int(dataSize))
         let bitmapInfo = inputIm.bitmapInfo.rawValue
         print(bytesPerRow)
@@ -396,7 +320,6 @@ var globalImg: CGImage? = nil
 
         var byteIndex = 0
         // Iterate through pixels
-        var counter = 0
         while byteIndex < dataSize {
 
             // Get Column and Row of current pixel
@@ -409,7 +332,6 @@ var globalImg: CGImage? = nil
                 rawData[byteIndex + 1] = UInt8(0)
                 rawData[byteIndex + 2] = UInt8(0)
                 rawData[byteIndex + 3] = UInt8(0)
-                //counter = counter + 4
             }/*
             else if(column == seamColumn) {
                 rawData[byteIndex + 0] = UInt8(255)
@@ -424,54 +346,19 @@ var globalImg: CGImage? = nil
                     rawData[byteIndex + 3] = UInt8(0)
             }
             else if(column < width-1 && column >= seamColumn) {
-                rawData[byteIndex - counter + 0] = UInt8(rawData[byteIndex + 4])
-                rawData[byteIndex - counter + 1] = UInt8(rawData[byteIndex + 5])
-                rawData[byteIndex - counter + 2] = UInt8(rawData[byteIndex + 6])
-                rawData[byteIndex - counter + 3] = UInt8(rawData[byteIndex + 7])
+                rawData[byteIndex + 0] = UInt8(rawData[byteIndex + 4])
+                rawData[byteIndex + 1] = UInt8(rawData[byteIndex + 5])
+                rawData[byteIndex + 2] = UInt8(rawData[byteIndex + 6])
+                rawData[byteIndex + 3] = UInt8(rawData[byteIndex + 7])
             }
             else {
-                rawData[byteIndex - counter + 0] = UInt8(rawData[byteIndex ])
-                rawData[byteIndex - counter + 1] = UInt8(rawData[byteIndex + 1])
-                rawData[byteIndex - counter + 2] = UInt8(rawData[byteIndex + 2])
-                rawData[byteIndex - counter + 3] = UInt8(rawData[byteIndex + 3])
+                rawData[byteIndex + 0] = UInt8(rawData[byteIndex ])
+                rawData[byteIndex + 1] = UInt8(rawData[byteIndex + 1])
+                rawData[byteIndex + 2] = UInt8(rawData[byteIndex + 2])
+                rawData[byteIndex + 3] = UInt8(rawData[byteIndex + 3])
             }
             byteIndex += 4
-        }/*
-        for x in 0 ..< bytesPerRow/4 {
-            for y in 0 ..< height {
-                let byteIndex = bytesPerRow * Int(y) + bytesPerPixel * Int(x)
-                let column = x
-                let row = y
-                let seamColumn = seam[Int(row)]
-                if(column > width) {
-                    print("yes")
-                    continue;
-                }
-                if(column == seamColumn) {
-                    rawData[byteIndex + 0] = UInt8(255)
-                    rawData[byteIndex + 1] = UInt8(0)
-                    rawData[byteIndex + 2] = UInt8(0)
-                    rawData[byteIndex + 3] = UInt8(255)
-                }
-                if(column == width-1)  {
-                        rawData[byteIndex + 0] = UInt8(255)
-                        rawData[byteIndex + 1] = UInt8(255)
-                        rawData[byteIndex + 2] = UInt8(255)
-                        rawData[byteIndex + 3] = UInt8(255)
-                }
-                if(column < width && column > seamColumn) {
-                    rawData[byteIndex + 0] = UInt8(rawData[byteIndex + 4])
-                    rawData[byteIndex + 1] = UInt8(rawData[byteIndex + 5])
-                    rawData[byteIndex + 2] = UInt8(rawData[byteIndex + 6])
-                    rawData[byteIndex + 3] = UInt8(rawData[byteIndex + 7])
-                }
-                if(byteIndex < 16) {
-                    //rawData[byteIndex] = UInt8(255)
-                    //rawData[byteIndex + 1] = UInt8(255)
-                    //rawData[byteIndex + 2] = UInt8(255)
-                }
-            }
-        }*/
+        }
         // Retrieve image from memory context.
         let resultImage = context.makeImage()!
 
