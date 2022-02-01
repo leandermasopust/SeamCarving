@@ -149,12 +149,17 @@ var width = 0
 var height = 0
 var globalImg: CGImage? = nil
     @IBAction func startCarving1() {
-        let timer = ParkBenchTimer()
         let xReductionInput = (inputX.text! as NSString).integerValue
+
+        // checks for faulty input
+        if (imageView.image?.cgImage == nil){return}
+        if (xReductionInput <= 0) {return}
+
         globalImg = imageView.image!.cgImage!
         width = globalImg!.width
         height = globalImg!.height
-        if xReductionInput <= 0 {return}
+
+        let timer = ParkBenchTimer()
         for _ in 1...xReductionInput {
             let timer1 = ParkBenchTimer()
             let energyMap = calculateEnergyMapX(inputIm: globalImg!)
