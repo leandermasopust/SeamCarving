@@ -48,10 +48,10 @@ extension UIViewController {
 
 extension CGImage {
 
-    subscript (x: Int, y: Int) -> UIColor? {
+    subscript (x: Int, y: Int) -> [CGFloat] {
 
         if x < 0 || x > Int(self.width) || y < 0 || y > Int(self.height) {
-            return nil
+            return []
         }
 
         let provider = self.dataProvider
@@ -66,7 +66,7 @@ extension CGImage {
         let b = CGFloat(data![pixelData + 2]) / 255.0
         let a = CGFloat(data![pixelData + 3]) / 255.0
 
-        return UIColor(red: r, green: g, blue: b, alpha: a)
+        return [r,g,b,a]
     }
 }
 
@@ -75,18 +75,6 @@ extension UIColor {
     var greenValue: CGFloat{ return CIColor(color: self).green }
     var blueValue: CGFloat{ return CIColor(color: self).blue }
     var alphaValue: CGFloat{ return CIColor(color: self).alpha }
-}
-extension UIImage {
-    func resizeImageWith(newSize: CGSize) -> UIImage? {
-        let horizontalRatio = newSize.width / size.width
-        let verticalRatio = newSize.height / size.height
-        let ratio = max(horizontalRatio, verticalRatio)
-        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 0)
-        defer { UIGraphicsEndImageContext() }
-        draw(in: CGRect(origin: .zero, size: newSize))
-        return UIGraphicsGetImageFromCurrentImageContext()
-    }
 }
 
 class EnergyMapFilter: CIFilter {
@@ -155,31 +143,42 @@ var globalImg: CGImage? = nil
         if (imageView.image?.cgImage == nil){return}
         if (xReductionInput <= 0) {return}
 
+        // set global variables
         globalImg = imageView.image!.cgImage!
         width = globalImg!.width
         height = globalImg!.height
 
         let timer = ParkBenchTimer()
         for _ in 1...xReductionInput {
+            // calculate energy map
             let timer1 = ParkBenchTimer()
             let energyMap = calculateEnergyMapX(inputIm: globalImg!)
             print("The EnergyMap took \(timer1.stop()) seconds.")
+
+            // calculate seam map
             let timer2 = ParkBenchTimer()
             let seamMap = calculateSeamMap(energyMap: energyMap)
             print("The SeamMap took \(timer2.stop()) seconds.")
+
+            // calculate seam
             let timer3 = ParkBenchTimer()
             let seam = calculateSeam(seamMap: seamMap)
             print("The Seam took \(timer3.stop()) seconds.")
+
+            // remove seam
             let timer4 = ParkBenchTimer()
             _ = removeSeamWithoutShader(inputIm: globalImg!, seam:seam)
             print("The Removal of Seam took \(timer4.stop()) seconds.")
+
+            // set UI and global variables
             width = width-1
             labelX.text = "\(width)"
             labelY.text = "\(height)"
-            imageView.image =  UIImage(cgImage: globalImg!)
+
             //showSeamMap(seamMap: seamMap)
         }
         print("The Carving took \(timer.stop()) seconds.")
+        imageView.image =  UIImage(cgImage: globalImg!)
 
     }
     func calculateEnergyMapX(inputIm: CGImage) -> CGImage {
@@ -195,7 +194,7 @@ var globalImg: CGImage? = nil
         var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
         for y in 0...(height-1) {
             for x in 0...(width-1) {
-                let red = CIColor(color: energyMap[x,y]!).red
+                let red = energyMap[x,y][0]
 
                 if(x == 0 || x == (width-1)) {
                     // workaround to avoid edge-cutting
