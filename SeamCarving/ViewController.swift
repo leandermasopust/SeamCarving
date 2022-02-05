@@ -127,6 +127,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var width = 0
     var height = 0
     var img: CGImage? = nil
+    var seam: [Int]? = nil
+    var seamMap: [[CGFloat]]? = nil
+    var filter = EnergyMapFilter()
 
     @IBAction func startCarving() {
         let xReductionInput = (inputX.text! as NSString).integerValue
@@ -140,77 +143,102 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         width = img!.width
         height = img!.height
 
-        let timer = ParkBenchTimer()
-        for _ in 1...xReductionInput {
-            // calculate energy map
-            let timer1 = ParkBenchTimer()
-            let energyMap = calculateEnergyMapX(inputIm: img!)
-            print("The EnergyMap took \(timer1.stop()) seconds.")
-            // TODO: MEMORY LEAK IN HERE UH OH
 
-            // calculate seam map
-            let timer2 = ParkBenchTimer()
-            let seamMap = calculateSeamMap(energyMap: energyMap)
-            print("The SeamMap took \(timer2.stop()) seconds.")
 
-            // calculate seam
-            let timer3 = ParkBenchTimer()
-            let seam = calculateSeam(seamMap: seamMap)
-            print("The Seam took \(timer3.stop()) seconds.")
+        DispatchQueue(label: "Updating images").async {
+            let timer = ParkBenchTimer()
+            for _ in 1...xReductionInput {
+                // calculate energy map
+                //let timer1 = ParkBenchTimer()
+                let energyMap = self.calculateEnergyMapX()
+                //print("The EnergyMap took \(timer1.stop()) seconds.")
+                // TODO: MEMORY LEAK IN HERE UH OH
 
-            // remove seam
-            let timer4 = ParkBenchTimer()
-            removeSeam(inputImage: img!, seam:seam)
-            print("The Removal of Seam took \(timer4.stop()) seconds.")
+                // calculate seam map
+                //let timer2 = ParkBenchTimer()
+                self.calculateSeamMap(energyMap: energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
+                //print("The SeamMap took \(timer2.stop()) seconds.")
 
-            // set UI and global variables
-            width = width-1
-            labelX.text = "\(width)"
-            labelY.text = "\(height)"
+                // calculate seam
+                //let timer3 = ParkBenchTimer()
+                self.seam = self.calculateSeam(seamMap: self.seamMap!)
+                //print("The Seam took \(timer3.stop()) seconds.")
 
-            //showSeamMap(seamMap: seamMap)
+                // remove seam
+                //let timer4 = ParkBenchTimer()
+                self.removeSeam(inputImage: self.img!, seam: self.seam!)
+                //print("The Removal of Seam took \(timer4.stop()) seconds.")
+
+                // set correct width
+                self.width = self.width-1
+
+                // set UI in main Thread
+                DispatchQueue.main.async {
+                    self.labelX.text = "\(self.width)"
+                    self.imageView.image =  UIImage(cgImage: self.img!)
+                    self.imageView.setNeedsDisplay()
+                }
+                //showSeamMap(seamMap: seamMap)
+            }
+            print("The Carving took \(timer.stop()) seconds.")
         }
-        print("The Carving took \(timer.stop()) seconds.")
+
         imageView.image =  UIImage(cgImage: img!)
 
     }
-    func calculateEnergyMapX(inputIm: CGImage) -> CGImage {
-        let inputImage = CIImage(cgImage: inputIm)
-        let context = CIContext(options: nil)
-        let filter = EnergyMapFilter()
-        filter.inputImage = inputImage
-        let outputImage = context.createCGImage(filter.outputImage()!, from: inputImage.extent)!
-        UIGraphicsEndImageContext()
+    func calculateEnergyMapX() -> CGImage {
+        filter.inputImage = CIImage(cgImage: img!)
+        let outputImage = CIContext().createCGImage(filter.outputImage()!, from: filter.inputImage!.extent)!
         return outputImage
     }
 
-    func calculateSeamMap(energyMap: CGImage!) -> [[CGFloat]]{
-        var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
-        for y in 0...(height-1) {
-            for x in 0...(width-1) {
-                let red = energyMap[x,y][0]
+    func calculateSeamMap(energyMap: CGImage!, lastSeam: [Int]?, lastSeamMap: inout [[CGFloat]]?){
+        if(lastSeamMap == nil || lastSeam == nil) {
+            var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
+            for y in 0...(height-1) {
+                for x in 0...(width-1) {
+                    let red = energyMap[x,y][0]
 
-                if(x == 0 || x == (width-1)) {
-                    // workaround to avoid edge-cutting
-                    map[y][x] = CGFloat.greatestFiniteMagnitude
+                    if(x == 0 || x == (width-1)) {
+                        // workaround to avoid edge-cutting
+                        map[y][x] = CGFloat.greatestFiniteMagnitude
+                    }
+                    else if(y == 0) {
+                        map[y][x] = red
+                    }
+                    else {
+                        map[y][x] = min(min(map[y-1][x-1], map[y-1][x]),map[y-1][x+1]) + red
+                    }
                 }
-                else if(y == 0) {
-                    map[y][x] = red
-                }
-                else {
-                    map[y][x] = min(min(map[y-1][x-1], map[y-1][x]),map[y-1][x+1]) + red
+            }
+            lastSeamMap = map
+        }
+        else {
+            for y in 0...(height-1) {
+                for x in (seam![y] - y - 1)...(seam![y] + y) {
+                    if(x > (width-1) || x  < 0) {
+                        continue
+                    }
+                    let red = energyMap[x,y][0]
+                    if(x == 0 || x == (width-1)) {
+                        // workaround to avoid edge-cutting
+                        lastSeamMap![y][x] = CGFloat.greatestFiniteMagnitude
+                    }
+                    else if(y == 0) {
+                        lastSeamMap![y][x] = red
+                    }
+                    else {
+                        lastSeamMap![y][x] = min(min(lastSeamMap![y-1][x-1], lastSeamMap![y-1][x]), lastSeamMap![y-1][x+1]) + red
+                    }
                 }
             }
         }
-        return map
     }
 
     func showSeamMap(seamMap: [[CGFloat]]) {
-        let rows = seamMap.count
-        let columns = seamMap[0].count
         var max = 0.0
-        for x in 1...columns-2 {
-            for y in 1...rows-2 {
+        for x in 1...width-2 {
+            for y in 1...height-2 {
                 if(max < seamMap[y][x]) {
                     max = seamMap[y][x]
                 }
@@ -218,12 +246,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         }
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bytesPerPixel:Int = 4
-        let bytesPerRow = 4 * columns
+        let bytesPerRow = 4 * width
         let bitsPerComponent = 8
-        let dataSize =  columns * bytesPerPixel * rows
+        let dataSize =  width * bytesPerPixel * height
         var rawData = [UInt8](repeating: 0, count: Int(dataSize))
         let bitmapInfo = img!.bitmapInfo.rawValue
-        let context = CGContext(data: &rawData, width: columns, height: rows, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+        let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
 
         var byteIndex = 0
         // Iterate through pixels
@@ -256,15 +284,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     func calculateSeam(seamMap: [[CGFloat]]) -> [Int] {
         // returns array of length image.size.height where the value is the index
         // 0 <= x <= image.size.width with x being part of the seam
-        let rows = seamMap.count
-        let columns = seamMap[0].count
-        var seamIndex = [Int](repeating: 0, count: rows)
+        var seamIndex = [Int](repeating: 0, count: height)
 
         // calculate start of seam from bottom
-        let y = rows-1
+        let y = height-1
         var min = CGFloat.greatestFiniteMagnitude
         var minIndex = -1
-        for x in 0...columns-1 {
+        for x in 0...width-1 {
             if(min > seamMap[y][x]) {
                 min = seamMap[y][x]
                 minIndex = x
@@ -275,7 +301,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         print(minIndex)
 
         // calculate rest of seam by looking at the top neighbour values
-        for y in stride(from: rows-2, through: 0, by: -1) {
+        for y in stride(from: height-2, through: 0, by: -1) {
             let xValueOfSeamPartBelow = seamIndex[y+1]
             var min = CGFloat.greatestFiniteMagnitude
             var minIndex = -1
@@ -283,7 +309,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 if(x <= -1) {
                     continue
                 }
-                if(x >= columns) {
+                if(x >= width) {
                     continue
                 }
                 if(min > seamMap[y][x]) {
