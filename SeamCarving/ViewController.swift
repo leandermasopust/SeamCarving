@@ -10,6 +10,7 @@ import CoreImage.CIFilterBuiltins
 import UIKit
 import CoreFoundation
 
+//https://stackoverflow.com/questions/24755558/measure-elapsed-time-in-swift
 class ParkBenchTimer {
 
     let startTime:CFAbsoluteTime
@@ -45,7 +46,7 @@ extension UIViewController {
         view.endEditing(true)
     }
 }
-
+// https://gist.github.com/michaeldong/ac607e732728b704a0ddd6606f9dde56 with small changes
 extension CGImage {
 
     subscript (x: Int, y: Int) -> [CGFloat] {
@@ -68,13 +69,6 @@ extension CGImage {
 
         return [r, g, b, a]
     }
-}
-
-extension UIColor {
-    var redValue: CGFloat{ return CIColor(color: self).red }
-    var greenValue: CGFloat{ return CIColor(color: self).green }
-    var blueValue: CGFloat{ return CIColor(color: self).blue }
-    var alphaValue: CGFloat{ return CIColor(color: self).alpha }
 }
 
 class EnergyMapFilter: CIFilter {
@@ -105,7 +99,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     @IBOutlet var inputX: UITextField!
     @IBOutlet var inputY: UITextField!
     var imagePicker = UIImagePickerController()
-    var context: CIContext!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -281,7 +274,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         print("Carving at: ")
         print(minIndex)
 
-        //c alculate rest of seam by looking at the top neighbour values
+        // calculate rest of seam by looking at the top neighbour values
         for y in stride(from: rows-2, through: 0, by: -1) {
             let xValueOfSeamPartBelow = seamIndex[y+1]
             var min = CGFloat.greatestFiniteMagnitude
