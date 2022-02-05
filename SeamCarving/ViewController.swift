@@ -149,25 +149,25 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let timer = ParkBenchTimer()
             for _ in 1...xReductionInput {
                 // calculate energy map
-                //let timer1 = ParkBenchTimer()
+                let timer1 = ParkBenchTimer()
                 let energyMap = self.calculateEnergyMapX()
-                //print("The EnergyMap took \(timer1.stop()) seconds.")
+                print("The EnergyMap took \(timer1.stop()) seconds.")
                 // TODO: MEMORY LEAK IN HERE UH OH
 
                 // calculate seam map
-                //let timer2 = ParkBenchTimer()
+                let timer2 = ParkBenchTimer()
                 self.calculateSeamMap(energyMap: energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
-                //print("The SeamMap took \(timer2.stop()) seconds.")
+                print("The SeamMap took \(timer2.stop()) seconds.")
 
                 // calculate seam
-                //let timer3 = ParkBenchTimer()
+                let timer3 = ParkBenchTimer()
                 self.seam = self.calculateSeam(seamMap: self.seamMap!)
-                //print("The Seam took \(timer3.stop()) seconds.")
+                print("The Seam took \(timer3.stop()) seconds.")
 
                 // remove seam
-                //let timer4 = ParkBenchTimer()
+                let timer4 = ParkBenchTimer()
                 self.removeSeam(inputImage: self.img!, seam: self.seam!)
-                //print("The Removal of Seam took \(timer4.stop()) seconds.")
+                print("The Removal of Seam took \(timer4.stop()) seconds.")
 
                 // set correct width
                 self.width = self.width-1
