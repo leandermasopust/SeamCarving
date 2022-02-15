@@ -165,6 +165,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var img: CGImage? = nil
     var seam: [Int]? = nil
     var seamMap: [[CGFloat]]? = nil
+    var energyMap: CGImage? = nil
+    var prov: UnsafePointer<UInt8>? = nil
     var filter = EnergyMapFilter()
 
     @IBAction func startCarving() {
@@ -186,13 +188,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             for _ in 1...xReductionInput {
                 // calculate energy map
                 let timer1 = ParkBenchTimer()
-                let energyMap = self.calculateEnergyMapX()
+                self.energyMap = self.calculateEnergyMapX()
+                self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
                 print("The EnergyMap took \(timer1.stop()) seconds.")
                 // TODO: MEMORY LEAK IN HERE UH OH
 
                 // calculate seam map
                 let timer2 = ParkBenchTimer()
-                self.calculateSeamMap(energyMap: energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
+                self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
                 print("The SeamMap took \(timer2.stop()) seconds.")
 
                 // calculate seam
@@ -280,10 +283,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             lastSeamMap = map
         }
     }
+    var dataProv = 0.0
     var extr = 0.0
     var calc = 0.0
+
     func calculateSeamMapAt(x:Int, y:Int, energyMap: CGImage!, map: [[CGFloat]]) -> CGFloat {
+        let timer2 = ParkBenchTimer()
+        dataProv += timer2.stop()
         let timer = ParkBenchTimer()
+        let red = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
         let a = timer.stop()
         extr += a
 
@@ -292,11 +300,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             return CGFloat.greatestFiniteMagnitude
         }
         else if(y == 0) {
-            return energyMap[x,y][0]
+            return red
         }
         else {
             let timer2 = ParkBenchTimer()
-            let b = min(min(map[y-1][x-1], map[y-1][x]),map[y-1][x+1]) + energyMap[x,y][0]
+            let b = min(min(map[y-1][x-1], map[y-1][x]),map[y-1][x+1]) + red
             calc += timer2.stop()
             return b
         }
@@ -316,6 +324,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 map.append(buffer)
             }
             lastSeamMap = map
+            print(dataProv)
             print(extr)
             print(calc)
         }
