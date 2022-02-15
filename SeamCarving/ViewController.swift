@@ -129,6 +129,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var img: CGImage? = nil
     var seam: [Int]? = nil
     var seamMap: [[CGFloat]]? = nil
+    var energyMap: CGImage? = nil
+    var prov: UnsafePointer<UInt8>? = nil
     var filter = EnergyMapFilter()
 
     @IBAction func startCarving() {
@@ -150,13 +152,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             for _ in 1...xReductionInput {
                 // calculate energy map
                 let timer1 = ParkBenchTimer()
-                let energyMap = self.calculateEnergyMapX()
+                self.energyMap = self.calculateEnergyMapX()
+                self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
                 print("The EnergyMap took \(timer1.stop()) seconds.")
                 // TODO: MEMORY LEAK IN HERE UH OH
 
                 // calculate seam map
                 let timer2 = ParkBenchTimer()
-                self.calculateSeamMap(energyMap: energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
+                self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
                 print("The SeamMap took \(timer2.stop()) seconds.")
 
                 // calculate seam
@@ -197,8 +200,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
             for y in 0...(height-1) {
                 for x in 0...(width-1) {
-                    let red = energyMap[x,y][0]
-
+                    let red = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
                     if(x == 0 || x == (width-1)) {
                         // workaround to avoid edge-cutting
                         map[y][x] = CGFloat.greatestFiniteMagnitude
@@ -219,7 +221,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     if(x > (width-1) || x  < 0) {
                         continue
                     }
-                    let red = energyMap[x,y][0]
+                    let red = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
                     if(x == 0 || x == (width-1)) {
                         // workaround to avoid edge-cutting
                         lastSeamMap![y][x] = CGFloat.greatestFiniteMagnitude
