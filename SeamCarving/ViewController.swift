@@ -222,11 +222,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     func carve(pixel: Int, dimension: String)  {
 
         for _ in 0..<pixel {
+
             // release memory early
             autoreleasepool {
+
                 // calculate energy map
                 let timer1 = ParkBenchTimer()
-                self.energyMap = self.calculateEnergyMapX()
+                self.energyMap = self.calculateEnergyMap()
                 self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
                 energyMapTime += timer1.stop()
 
@@ -269,7 +271,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         }
     }
 
-    func calculateEnergyMapX() -> CGImage {
+    func calculateEnergyMap() -> CGImage {
         filter.inputImage = CIImage(cgImage: img!)
         let outputImage = CIContext().createCGImage(filter.outputImage()!, from: filter.inputImage!.extent)!
         return outputImage
