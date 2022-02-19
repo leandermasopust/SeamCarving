@@ -463,7 +463,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     }
 
                     // shift bytes at/right of seam
-                    else if(column < width-1 && column > seamColumn) {
+                    else if(column < width-1 && column >= seamColumn) {
                         subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 4])
                         subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 5])
                         subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 6])
