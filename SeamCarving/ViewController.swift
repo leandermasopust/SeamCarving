@@ -115,8 +115,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         prov = nil
 
         // update extent textfields
-        labelX.text = "\(imageView.image!.size.width)"
-        labelY.text = "\(imageView.image!.size.height)"
+        labelX.text = "\(Int(imageView.image!.size.width))"
+        labelY.text = "\(Int(imageView.image!.size.height))"
     }
 
     @IBAction func startCarving() {
@@ -129,6 +129,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         if (imageView.image?.cgImage == nil){return}
         if (xReductionInput < 0) {return}
         if (yReductionInput < 0) {return}
+        if (Int(imageView.image!.size.width) - xReductionInput <= 1) {return}
+        if (Int(imageView.image!.size.height) - yReductionInput <= 1) {return}
+
 
         // return if there is nothing to carve
         if (xReductionInput + yReductionInput <= 0) {return}
