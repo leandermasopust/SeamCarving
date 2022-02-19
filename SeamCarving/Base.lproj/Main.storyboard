@@ -67,14 +67,14 @@
                                     <constraint firstItem="vLB-ew-y91" firstAttribute="top" secondItem="Sxk-HN-vEb" secondAttribute="topMargin" id="uK2-iu-0LS"/>
                                 </constraints>
                             </view>
-                            <textField opaque="NO" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Width" minimumFontSize="17" background="pencil" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="yxO-JC-FGp">
+                            <textField opaque="NO" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Width" textAlignment="center" minimumFontSize="17" background="pencil" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="yxO-JC-FGp">
                                 <rect key="frame" x="16" y="613" width="160" height="35"/>
                                 <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="160" id="CtH-5T-2YU"/>
                                     <constraint firstAttribute="height" constant="35" id="YZe-Bh-CpA"/>
                                 </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="12"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
                             </textField>
                             <textField opaque="NO" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Height" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="ssD-hg-hJE">
@@ -119,11 +119,13 @@
                     </view>
                     <navigationItem key="navigationItem" id="MCW-cz-JLS"/>
                     <connections>
+                        <outlet property="carveButton" destination="lUw-Gz-i7W" id="0Pf-83-B4n"/>
                         <outlet property="imageView" destination="vLB-ew-y91" id="Ek1-Gw-QaY"/>
                         <outlet property="inputX" destination="yxO-JC-FGp" id="aUp-d3-xqZ"/>
                         <outlet property="inputY" destination="ssD-hg-hJE" id="fhM-1x-XRn"/>
                         <outlet property="labelX" destination="T6A-az-BnQ" id="Afu-AB-JRH"/>
                         <outlet property="labelY" destination="FFw-Oj-Gmz" id="rob-sB-pXb"/>
+                        <outlet property="selectButton" destination="c7f-8p-spx" id="Pbc-W7-FpH"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

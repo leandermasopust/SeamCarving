@@ -69,7 +69,8 @@ class EnergyMapFilter: CIFilter {
 
 class ViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     @IBOutlet var  imageView: UIImageView!
-    @IBOutlet var chooseButton: UIButton!
+    @IBOutlet var selectButton: UIButton!
+    @IBOutlet var carveButton: UIButton!
     @IBOutlet var labelX: UILabel!
     @IBOutlet var labelY: UILabel!
     @IBOutlet var inputX: UITextField!
@@ -125,14 +126,22 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         if (xReductionInput < 0) {return}
         if (yReductionInput < 0) {return}
 
+        // return if there is nothing to carve
+        if (xReductionInput + yReductionInput <= 0) {return}
+
         // set global variables
         img = imageView.image!.cgImage!
         width = img!.width
         height = img!.height
 
-
-
         DispatchQueue(label: "l").async {
+
+            // disable carve button and select button
+            DispatchQueue.main.sync {
+                self.carveButton.isEnabled = false
+                self.selectButton.isEnabled = false
+            }
+
             let timer = ParkBenchTimer()
 
             self.carveWidth(xReductionInput: xReductionInput)
@@ -144,9 +153,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             print("The Seam took \(self.seamTime) seconds.")
             print("The Removal of Seam took \(self.seamRemovalTime) seconds.")
             print("The Carving took \(timer.stop()) seconds.")
-        }
 
-        self.imageView.image =  UIImage(cgImage: self.img!)
+            // enable carve button and select button
+            DispatchQueue.main.sync {
+                self.carveButton.isEnabled = true
+                self.selectButton.isEnabled = true
+            }
+        }
     }
     func carveWidth(xReductionInput: Int) {
         self.carve(pixel: xReductionInput, dimension: "width")
