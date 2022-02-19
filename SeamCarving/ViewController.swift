@@ -99,6 +99,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     @IBOutlet var inputX: UITextField!
     @IBOutlet var inputY: UITextField!
     var imagePicker = UIImagePickerController()
+    var width = 0
+    var height = 0
+    var img: CGImage? = nil
+    var seam: [Int]? = nil
+    var seamMap: [[CGFloat]]? = nil
+    var energyMap: CGImage? = nil
+    var prov: UnsafePointer<UInt8>? = nil
+    var filter = EnergyMapFilter()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -118,20 +126,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         guard let image = info[.editedImage] as? UIImage else {return}
         self.dismiss(animated: true, completion: { () -> Void in})
         imageView.image = image
+        seamMap = nil
+        seam = nil
+        energyMap = nil
+        prov = nil
         let width = imageView.image?.size.width
         let height = imageView.image?.size.height
         labelX.text = "\(width ?? 0.0)"
         labelY.text = "\(height ?? 0.0)"
     }
-
-    var width = 0
-    var height = 0
-    var img: CGImage? = nil
-    var seam: [Int]? = nil
-    var seamMap: [[CGFloat]]? = nil
-    var energyMap: CGImage? = nil
-    var prov: UnsafePointer<UInt8>? = nil
-    var filter = EnergyMapFilter()
 
     @IBAction func startCarving() {
         let xReductionInput = (inputX.text! as NSString).integerValue
@@ -344,6 +347,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
         var byteIndex = 0
         // iterate over all bytes
+
+        var a = 0.0
         while byteIndex < dataSize {
 
             // get column and row of current pixel
@@ -352,6 +357,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
             // get column of seam for this specific row
             let seamColumn = seam[Int(row)]
+
             if(column >= width-1) {
                 rawData[byteIndex + 0] = UInt8(0)
                 rawData[byteIndex + 1] = UInt8(0)
@@ -371,8 +377,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 rawData[byteIndex + 2] = UInt8(rawData[byteIndex + 6])
                 rawData[byteIndex + 3] = UInt8(rawData[byteIndex + 7])
             }
+
             byteIndex += 4
         }
+        print(a)
         // Retrieve image from memory context.
         let resultImage = context.makeImage()!
         UIGraphicsEndImageContext()
