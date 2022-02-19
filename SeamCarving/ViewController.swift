@@ -148,44 +148,53 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         width = img!.width
         height = img!.height
 
-
+        var energyMapTime = 0.0
+        var seamMapTime = 0.0
+        var seamTime = 0.0
+        var seamRemovalTime = 0.0
 
         DispatchQueue(label: "Updating images").async {
             let timer = ParkBenchTimer()
             for _ in 1...xReductionInput {
-                // calculate energy map
-                let timer1 = ParkBenchTimer()
-                self.energyMap = self.calculateEnergyMapX()
-                self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
-                print("The EnergyMap took \(timer1.stop()) seconds.")
-                // TODO: MEMORY LEAK IN HERE UH OH
+                // release memory early
+                autoreleasepool {
+                    // calculate energy map
+                    let timer1 = ParkBenchTimer()
+                    self.energyMap = self.calculateEnergyMapX()
+                    self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
+                    energyMapTime += timer1.stop()
 
-                // calculate seam map
-                let timer2 = ParkBenchTimer()
-                self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
-                print("The SeamMap took \(timer2.stop()) seconds.")
+                    // calculate seam map
+                    let timer2 = ParkBenchTimer()
+                    self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
+                    seamMapTime += timer2.stop()
 
-                // calculate seam
-                let timer3 = ParkBenchTimer()
-                self.seam = self.calculateSeam(seamMap: self.seamMap!)
-                print("The Seam took \(timer3.stop()) seconds.")
+                    // calculate seam
+                    let timer3 = ParkBenchTimer()
+                    self.seam = self.calculateSeam(seamMap: self.seamMap!)
+                    seamTime += timer3.stop()
 
-                // remove seam
-                let timer4 = ParkBenchTimer()
-                self.removeSeam(inputImage: self.img!, seam: self.seam!)
-                print("The Removal of Seam took \(timer4.stop()) seconds.")
+                    // remove seam
+                    let timer4 = ParkBenchTimer()
+                    self.removeSeam(inputImage: self.img!, seam: self.seam!)
+                    seamRemovalTime += timer4.stop()
 
-                // set correct width
-                self.width = self.width-1
+                    // set correct width
+                    self.width = self.width-1
 
-                // set UI in main Thread
-                DispatchQueue.main.async {
-                    self.labelX.text = "\(self.width)"
-                    self.imageView.image =  UIImage(cgImage: self.img!)
-                    self.imageView.setNeedsDisplay()
+                    // set UI in main Thread
+                    DispatchQueue.main.async {
+                        self.labelX.text = "\(self.width)"
+                        self.imageView.image =  UIImage(cgImage: self.img!)
+                        self.imageView.setNeedsDisplay()
+                    }
                 }
                 //showSeamMap(seamMap: seamMap)
             }
+            print("The EnergyMap took \(energyMapTime) seconds.")
+            print("The SeamMap took \(seamMapTime) seconds.")
+            print("The Seam took \(seamTime) seconds.")
+            print("The Removal of Seam took \(seamRemovalTime) seconds.")
             print("The Carving took \(timer.stop()) seconds.")
         }
 
@@ -302,8 +311,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             }
         }
         seamIndex[y] = minIndex
-        print("Carving at: ")
-        print(minIndex)
+        //print("Carving at: ")
+        //print(minIndex)
 
         // calculate rest of seam by looking at the top neighbour values
         for y in stride(from: height-2, through: 0, by: -1) {
