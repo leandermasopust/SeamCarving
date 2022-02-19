@@ -83,6 +83,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var energyMap: CGImage? = nil
     var prov: UnsafePointer<UInt8>? = nil
     var filter = EnergyMapFilter()
+    var energyMapTime = 0.0
+    var seamMapTime = 0.0
+    var seamTime = 0.0
+    var seamRemovalTime = 0.0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -114,69 +118,157 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     @IBAction func startCarving() {
         let xReductionInput = (inputX.text! as NSString).integerValue
+        let yReductionInput = (inputY.text! as NSString).integerValue
 
         // checks for faulty input
         if (imageView.image?.cgImage == nil){return}
-        if (xReductionInput <= 0) {return}
+        if (xReductionInput < 0) {return}
+        if (yReductionInput < 0) {return}
 
         // set global variables
         img = imageView.image!.cgImage!
         width = img!.width
         height = img!.height
 
-        var energyMapTime = 0.0
-        var seamMapTime = 0.0
-        var seamTime = 0.0
-        var seamRemovalTime = 0.0
+
 
         DispatchQueue(label: "l").async {
             let timer = ParkBenchTimer()
-            for _ in 1...xReductionInput {
-                // release memory early
-                autoreleasepool {
-                    // calculate energy map
-                    let timer1 = ParkBenchTimer()
-                    self.energyMap = self.calculateEnergyMapX()
-                    self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
-                    energyMapTime += timer1.stop()
 
-                    // calculate seam map
-                    let timer2 = ParkBenchTimer()
-                    self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
-                    seamMapTime += timer2.stop()
-
-                    // calculate seam
-                    let timer3 = ParkBenchTimer()
-                    self.seam = self.calculateSeam(seamMap: self.seamMap!)
-                    seamTime += timer3.stop()
-
-                    // remove seam
-                    let timer4 = ParkBenchTimer()
-                    self.removeSeam(inputImage: self.img!, seam: self.seam!)
-                    seamRemovalTime += timer4.stop()
-
-                    // set correct width
-                    self.width = self.width-1
-
-                    // set UI in main Thread
-                    DispatchQueue.main.async {
-                        self.labelX.text = "\(self.width)"
-                        self.imageView.image =  UIImage(cgImage: self.img!)
-                        self.imageView.setNeedsDisplay()
-                    }
-                }
-                //showSeamMap(seamMap: seamMap)
-            }
+            self.carveWidth(xReductionInput: xReductionInput)
+            self.carveHeight(yReductionInput: yReductionInput)
 
             // dump time outputs
-            print("The EnergyMap took \(energyMapTime) seconds.")
-            print("The SeamMap took \(seamMapTime) seconds.")
-            print("The Seam took \(seamTime) seconds.")
-            print("The Removal of Seam took \(seamRemovalTime) seconds.")
+            print("The EnergyMap took \(self.energyMapTime) seconds.")
+            print("The SeamMap took \(self.seamMapTime) seconds.")
+            print("The Seam took \(self.seamTime) seconds.")
+            print("The Removal of Seam took \(self.seamRemovalTime) seconds.")
             print("The Carving took \(timer.stop()) seconds.")
         }
 
+        self.imageView.image =  UIImage(cgImage: self.img!)
     }
+    func carveWidth(xReductionInput: Int) {
+        self.carve(pixel: xReductionInput, dimension: "width")
+    }
+    func carveHeight(yReductionInput: Int)  {
+
+        // carving height by rotating img: CGImage by 270° and counterrotating the UIImageView
+        // so the displayed image doesn't get rotated even though the image is rotated
+        // and thus gets carved in height
+
+        DispatchQueue.main.sync {
+
+            // get original x,y origin points from imageView
+            let x = imageView.frame.minX
+            let y = imageView.frame.minY
+
+            // rotate img 270° clockwise
+            let ci = CIImage(cgImage: img!).oriented(.left)
+            img = CIContext().createCGImage(ci, from: ci.extent)
+
+            // rotate UIImageView 90° clockwise
+            imageView.transform = imageView.transform.rotated(by: .pi / 2)
+
+            // set imageView frame so the imageView scaling doesn't change
+            imageView.frame = CGRect(x: x, y: y,
+                                     width: imageView.frame.height, height: imageView.frame.width)
+
+            // finally set the rotated image into the rotated imageView
+            imageView.image = UIImage(cgImage:img!)
+
+            // resetting global variables
+            seamMap = nil
+            seam = nil
+            energyMap = nil
+            prov = nil
+            width = img!.width
+            height = img!.height
+        }
+
+        carve(pixel: yReductionInput, dimension: "height")
+
+        DispatchQueue.main.sync {
+
+            // get original x,y origin points from imageView
+            let x = imageView.frame.minX
+            let y = imageView.frame.minY
+
+            // rotate img 90° clockwise
+            let ci = CIImage(cgImage: img!).oriented(.right)
+            img = CIContext().createCGImage(ci, from: ci.extent)
+
+            // rotate UIImageView 270° clockwise
+            imageView.transform = imageView.transform.rotated(by: .pi * 1.5)
+
+            // set imageView frame so the imageView scaling doesn't change
+            imageView.frame = CGRect(x: x, y: y,
+                                     width: imageView.frame.height, height: imageView.frame.width)
+
+            // finally set the rotated image into the rotated imageView
+            self.imageView.image =  UIImage(cgImage: self.img!)
+
+            // resetting global variables
+            seamMap = nil
+            seam = nil
+            energyMap = nil
+            prov = nil
+            width = img!.width
+            height = img!.height
+        }
+
+    }
+
+    func carve(pixel: Int, dimension: String)  {
+
+        for _ in 0..<pixel {
+            // release memory early
+            autoreleasepool {
+                // calculate energy map
+                let timer1 = ParkBenchTimer()
+                self.energyMap = self.calculateEnergyMapX()
+                self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
+                energyMapTime += timer1.stop()
+
+                // calculate seam map
+                let timer2 = ParkBenchTimer()
+                self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
+                seamMapTime += timer2.stop()
+
+                // calculate seam
+                let timer3 = ParkBenchTimer()
+                self.seam = self.calculateSeam(seamMap: self.seamMap!)
+                seamTime += timer3.stop()
+
+                // remove seam
+                let timer4 = ParkBenchTimer()
+                self.removeSeam(inputImage: self.img!, seam: self.seam!)
+                seamRemovalTime += timer4.stop()
+
+                // set correct width/height
+                if dimension == "height" {
+                    self.width = self.width-1
+                }
+                if dimension == "width" {
+                    self.width = self.width-1
+                }
+
+                // set UI in main Thread
+                DispatchQueue.main.async {
+                    if dimension == "height" {
+                        self.labelY.text = "\(self.width)"
+                    }
+                    if dimension == "width" {
+                        self.labelX.text = "\(self.width)"
+                    }
+                    self.imageView.image =  UIImage(cgImage: self.img!)
+                    self.imageView.setNeedsDisplay()
+                }
+            }
+            //showSeamMap(seamMap: seamMap!)
+        }
+    }
+
     func calculateEnergyMapX() -> CGImage {
         filter.inputImage = CIImage(cgImage: img!)
         let outputImage = CIContext().createCGImage(filter.outputImage()!, from: filter.inputImage!.extent)!
@@ -268,7 +360,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             rawData[byteIndex + 3] = UInt8(255)
             byteIndex += 4
         }
-        imageView.image =  UIImage(cgImage: context.makeImage()!)
+        DispatchQueue.main.sync {
+            imageView.image =  UIImage(cgImage: context.makeImage()!)
+        }
     }
 
 
@@ -354,13 +448,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     }
 
                     // shift bytes at/right of seam
-                    else if(column < width-1 && column >= seamColumn) {
+                    else if(column < width-1 && column > seamColumn) {
                         subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 4])
                         subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 5])
                         subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 6])
                         subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 7])
                     }
-
                     // left of seam => copy values from original buffer
                     else {
                         subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 0])
@@ -374,7 +467,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let context2 = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
         // Retrieve image from memory context.
         let resultImage = context2.makeImage()!
-        UIGraphicsEndImageContext()
         let imageCropped = cropLastColumn(image:resultImage)
         img = imageCropped
     }
