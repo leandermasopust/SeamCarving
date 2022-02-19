@@ -106,18 +106,22 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]){
         guard let image = info[.editedImage] as? UIImage else {return}
         self.dismiss(animated: true, completion: { () -> Void in})
+
+        // set global variables and updated imageView
         imageView.image = image
         seamMap = nil
         seam = nil
         energyMap = nil
         prov = nil
-        let width = imageView.image?.size.width
-        let height = imageView.image?.size.height
-        labelX.text = "\(width ?? 0.0)"
-        labelY.text = "\(height ?? 0.0)"
+
+        // update extent textfields
+        labelX.text = "\(imageView.image!.size.width)"
+        labelY.text = "\(imageView.image!.size.height)"
     }
 
     @IBAction func startCarving() {
+
+        // get number of pixels to carve for each dimension
         let xReductionInput = (inputX.text! as NSString).integerValue
         let yReductionInput = (inputY.text! as NSString).integerValue
 
@@ -469,6 +473,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                         subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 6])
                         subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 7])
                     }
+
                     // left of seam => copy values from original buffer
                     else {
                         subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 0])
