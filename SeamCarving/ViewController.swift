@@ -339,50 +339,61 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let colorSpace = inputImage.colorSpace!
         let bytesPerRow = inputImage.bytesPerRow
         let bitsPerComponent = inputImage.bitsPerComponent
-        let dataSize = inputImage.bytesPerRow * inputImage.height
-        var rawData = [UInt8](repeating: 0, count: Int(dataSize))
         let bitmapInfo = inputImage.bitmapInfo.rawValue
-        let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+        var dataSize = inputImage.bytesPerRow * inputImage.height
+        var rawDataOriginal = [UInt8](repeating: 0, count: Int(dataSize))
+        let context = CGContext(data: &rawDataOriginal, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
         context.draw(inputImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        var rawData = Array<UInt8>(unsafeUninitializedCapacity: (inputImage.bytesPerRow) * height, initializingWith: { (subBuffer: inout UnsafeMutableBufferPointer<UInt8>, subCount: inout Int) in
 
-        var byteIndex = 0
-        // iterate over all bytes
 
-        var a = 0.0
-        while byteIndex < dataSize {
 
-            // get column and row of current pixel
-            let column =  ((byteIndex / 4) % (bytesPerRow/4))
-            let row = ((byteIndex - (column*4)) / bytesPerRow)
+            // iterate over all bytes
 
-            // get column of seam for this specific row
-            let seamColumn = seam[Int(row)]
+            subCount = (inputImage.bytesPerRow / 4) * height
+            DispatchQueue.concurrentPerform(iterations: (height)) { row in
+                for column in 0..<(inputImage.bytesPerRow / 4) {
 
-            if(column >= width-1) {
-                rawData[byteIndex + 0] = UInt8(0)
-                rawData[byteIndex + 1] = UInt8(0)
-                rawData[byteIndex + 2] = UInt8(0)
-                rawData[byteIndex + 3] = UInt8(0)
-            }/*
-            else if(column == seamColumn) {
-                rawData[byteIndex + 0] = UInt8(255)
-                rawData[byteIndex + 1] = UInt8(0)
-                rawData[byteIndex + 2] = UInt8(0)
-                rawData[byteIndex + 3] = UInt8(255)
-            }*/
-            // shift bytes at/right of seam
-            else if(column < width-1 && column >= seamColumn) {
-                rawData[byteIndex + 0] = UInt8(rawData[byteIndex + 4])
-                rawData[byteIndex + 1] = UInt8(rawData[byteIndex + 5])
-                rawData[byteIndex + 2] = UInt8(rawData[byteIndex + 6])
-                rawData[byteIndex + 3] = UInt8(rawData[byteIndex + 7])
+                    // get column and row of current pixel
+                    //let column =  ((byteIndex / 4) % (bytesPerRow/4))
+                    //let row = ((byteIndex - (column*4)) / bytesPerRow)
+                    var byteIndex = (inputImage.bytesPerRow * row) + (4*column)
+                    // get column of seam for this specific row
+                    let seamColumn = seam[Int(row)]
+
+                    if(column >= width-1) {
+                        subBuffer[byteIndex + 0] = UInt8(0)
+                        subBuffer[byteIndex + 1] = UInt8(0)
+                        subBuffer[byteIndex + 2] = UInt8(0)
+                        subBuffer[byteIndex + 3] = UInt8(0)
+                    }/*
+                    else if(column == seamColumn) {
+                        rawData[byteIndex + 0] = UInt8(255)
+                        rawData[byteIndex + 1] = UInt8(0)
+                        rawData[byteIndex + 2] = UInt8(0)
+                        rawData[byteIndex + 3] = UInt8(255)
+                    }*/
+                    // shift bytes at/right of seam
+                    else if(column < width-1 && column >= seamColumn) {
+                        subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 4])
+                        subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 5])
+                        subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 6])
+                        subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 7])
+                    }
+                    else {
+                        subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 0])
+                        subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 1])
+                        subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 2])
+                        subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 3])
+                    }
+
+                    byteIndex += 4
+                }
             }
-
-            byteIndex += 4
-        }
-        print(a)
+        })
+        let context2 = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
         // Retrieve image from memory context.
-        let resultImage = context.makeImage()!
+        let resultImage = context2.makeImage()!
         UIGraphicsEndImageContext()
         let imageCropped = cropLastColumn(image:resultImage)
         img = imageCropped
