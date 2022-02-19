@@ -340,39 +340,33 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let bytesPerRow = inputImage.bytesPerRow
         let bitsPerComponent = inputImage.bitsPerComponent
         let bitmapInfo = inputImage.bitmapInfo.rawValue
-        var dataSize = inputImage.bytesPerRow * inputImage.height
+        let dataSize = inputImage.bytesPerRow * inputImage.height
+
+        // retrieve input image data and draw into rawDataOriginal
         var rawDataOriginal = [UInt8](repeating: 0, count: Int(dataSize))
         let context = CGContext(data: &rawDataOriginal, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
         context.draw(inputImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        // initialize new result array for writing into
         var rawData = Array<UInt8>(unsafeUninitializedCapacity: (inputImage.bytesPerRow) * height, initializingWith: { (subBuffer: inout UnsafeMutableBufferPointer<UInt8>, subCount: inout Int) in
-
-
-
-            // iterate over all bytes
-
             subCount = (inputImage.bytesPerRow / 4) * height
             DispatchQueue.concurrentPerform(iterations: (height)) { row in
+
+                // get column of seam for this specific row
+                let seamColumn = seam[Int(row)]
+
+                // iterate over columns
                 for column in 0..<(inputImage.bytesPerRow / 4) {
 
-                    // get column and row of current pixel
-                    //let column =  ((byteIndex / 4) % (bytesPerRow/4))
-                    //let row = ((byteIndex - (column*4)) / bytesPerRow)
-                    var byteIndex = (inputImage.bytesPerRow * row) + (4*column)
-                    // get column of seam for this specific row
-                    let seamColumn = seam[Int(row)]
-
+                    // calculate current index
+                    let byteIndex = (inputImage.bytesPerRow * row) + (4*column)
                     if(column >= width-1) {
                         subBuffer[byteIndex + 0] = UInt8(0)
                         subBuffer[byteIndex + 1] = UInt8(0)
                         subBuffer[byteIndex + 2] = UInt8(0)
                         subBuffer[byteIndex + 3] = UInt8(0)
-                    }/*
-                    else if(column == seamColumn) {
-                        rawData[byteIndex + 0] = UInt8(255)
-                        rawData[byteIndex + 1] = UInt8(0)
-                        rawData[byteIndex + 2] = UInt8(0)
-                        rawData[byteIndex + 3] = UInt8(255)
-                    }*/
+                    }
+
                     // shift bytes at/right of seam
                     else if(column < width-1 && column >= seamColumn) {
                         subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 4])
@@ -380,14 +374,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                         subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 6])
                         subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 7])
                     }
+
+                    // left of seam => copy values from original buffer
                     else {
                         subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 0])
                         subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 1])
                         subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 2])
                         subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 3])
                     }
-
-                    byteIndex += 4
                 }
             }
         })
