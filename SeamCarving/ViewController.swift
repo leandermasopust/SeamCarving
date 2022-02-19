@@ -46,30 +46,6 @@ extension UIViewController {
         view.endEditing(true)
     }
 }
-// https://gist.github.com/michaeldong/ac607e732728b704a0ddd6606f9dde56 with small changes
-extension CGImage {
-
-    subscript (x: Int, y: Int) -> [CGFloat] {
-
-        if x < 0 || x > Int(self.width) || y < 0 || y > Int(self.height) {
-            return []
-        }
-
-        let provider = self.dataProvider
-        let providerData = provider!.data
-        let data = CFDataGetBytePtr(providerData)
-
-        let numberOfComponents = 4
-        let pixelData = ((Int(self.bytesPerRow / 4) * y) + x) * numberOfComponents
-
-        let r = CGFloat(data![pixelData]) / 255.0
-        let g = CGFloat(data![pixelData + 1]) / 255.0
-        let b = CGFloat(data![pixelData + 2]) / 255.0
-        let a = CGFloat(data![pixelData + 3]) / 255.0
-
-        return [r, g, b, a]
-    }
-}
 
 class EnergyMapFilter: CIFilter {
 
@@ -153,7 +129,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         var seamTime = 0.0
         var seamRemovalTime = 0.0
 
-        DispatchQueue(label: "Updating images").async {
+        DispatchQueue(label: "l").async {
             let timer = ParkBenchTimer()
             for _ in 1...xReductionInput {
                 // release memory early
@@ -191,14 +167,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 }
                 //showSeamMap(seamMap: seamMap)
             }
+
+            // dump time outputs
             print("The EnergyMap took \(energyMapTime) seconds.")
             print("The SeamMap took \(seamMapTime) seconds.")
             print("The Seam took \(seamTime) seconds.")
             print("The Removal of Seam took \(seamRemovalTime) seconds.")
             print("The Carving took \(timer.stop()) seconds.")
         }
-
-        imageView.image =  UIImage(cgImage: img!)
 
     }
     func calculateEnergyMapX() -> CGImage {
@@ -268,6 +244,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
 
         var byteIndex = 0
+
         // Iterate through pixels
         while byteIndex < dataSize {
 
@@ -331,8 +308,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     minIndex = x
                 }
             }
-            //print("Cutting at: ")
-            //print(minIndex)
             seamIndex[y] = minIndex
         }
         return seamIndex
@@ -351,12 +326,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let bitmapInfo = inputImage.bitmapInfo.rawValue
         let dataSize = inputImage.bytesPerRow * inputImage.height
 
-        // retrieve input image data and draw into rawDataOriginal
+        // retrieve input image data and store in rawDataOriginal
         var rawDataOriginal = [UInt8](repeating: 0, count: Int(dataSize))
         let context = CGContext(data: &rawDataOriginal, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
         context.draw(inputImage, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        // initialize new result array for writing into
+        // initialize rawData array and fill it with new image data without seam
         var rawData = Array<UInt8>(unsafeUninitializedCapacity: (inputImage.bytesPerRow) * height, initializingWith: { (subBuffer: inout UnsafeMutableBufferPointer<UInt8>, subCount: inout Int) in
             subCount = (inputImage.bytesPerRow / 4) * height
             DispatchQueue.concurrentPerform(iterations: (height)) { row in
