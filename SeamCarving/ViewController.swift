@@ -334,13 +334,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         // initialize rawData array and fill it with new image data without seam
         var rawData = Array<UInt8>(unsafeUninitializedCapacity: (inputImage.bytesPerRow) * height, initializingWith: { (subBuffer: inout UnsafeMutableBufferPointer<UInt8>, subCount: inout Int) in
             subCount = (inputImage.bytesPerRow / 4) * height
+
+            // iterate over rows
             DispatchQueue.concurrentPerform(iterations: (height)) { row in
 
                 // get column of seam for this specific row
                 let seamColumn = seam[Int(row)]
 
                 // iterate over columns
-                for column in 0..<(inputImage.bytesPerRow / 4) {
+                DispatchQueue.concurrentPerform(iterations: (inputImage.bytesPerRow / 4)) { column in
 
                     // calculate current index
                     let byteIndex = (inputImage.bytesPerRow * row) + (4*column)
