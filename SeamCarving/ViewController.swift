@@ -68,7 +68,7 @@ class EnergyMapFilter: CIFilter {
 }
 
 class ViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-    @IBOutlet var  imageView: UIImageView!
+    @IBOutlet var imageView: UIImageView!
     @IBOutlet var selectButton: UIButton!
     @IBOutlet var carveButton: UIButton!
     @IBOutlet var labelX: UILabel!
@@ -236,7 +236,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             width = img!.width
             height = img!.height
         }
-
     }
 
     func carve(pixel: Int, dimension: String)  {
@@ -432,7 +431,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     func cropLastColumn(image: CGImage) -> CGImage {
         let resultSize = CGSize(width: (Int(width) - 1), height: Int(height))
         let toRect = CGRect(origin: .zero, size: resultSize)
-        return  image.cropping(to: toRect)!
+        return image.cropping(to: toRect)!
     }
 
     func removeSeam(inputImage: CGImage, seam:[Int]) {
