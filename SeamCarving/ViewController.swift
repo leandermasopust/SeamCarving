@@ -9,6 +9,7 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 import UIKit
 import CoreFoundation
+import PhotosUI
 
 //https://stackoverflow.com/questions/24755558/measure-elapsed-time-in-swift
 class ParkBenchTimer {
@@ -68,9 +69,11 @@ class EnergyMapFilter: CIFilter {
 }
 
 class ViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+
     @IBOutlet var  imageView: UIImageView!
     @IBOutlet var selectButton: UIButton!
     @IBOutlet var carveButton: UIButton!
+    @IBOutlet var frameButton: UIButton!
     @IBOutlet var labelX: UILabel!
     @IBOutlet var labelY: UILabel!
     @IBOutlet var inputX: UITextField!
@@ -79,10 +82,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var width = 0
     var height = 0
     var img: CGImage? = nil
+    var imgInFrame: CGImage? = nil
     var seam: [Int]? = nil
     var seamMap: [[CGFloat]]? = nil
     var energyMap: CGImage? = nil
     var prov: UnsafePointer<UInt8>? = nil
+    var alphaMap: [[UInt8]]? = nil
     var filter = EnergyMapFilter()
     var energyMapTime = 0.0
     var seamMapTime = 0.0
@@ -93,6 +98,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         super.viewDidLoad()
         self.hideKeyboardWhenTappedAround()
     }
+
 
     @IBAction func selectImage() {
         if UIImagePickerController.isSourceTypeAvailable(.savedPhotosAlbum) {
@@ -118,12 +124,132 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         labelX.text = "\(Int(imageView.image!.size.width))"
         labelY.text = "\(Int(imageView.image!.size.height))"
     }
+    @IBAction func selectFrame() {
+        img = imageView.image!.cgImage!
+        let f1 = UIImage.init(named:"frame-1")
+        let f1JPG = UIImage.init(named:"frame-1.bmp")
+        /*let f2 = UIImage.init(named:"frame-2")
+        let f3 = UIImage.init(named:"frame-4")
+        let f4 = UIImage.init(named:"frame-5")
+        let f5 = UIImage.init(named:"frame-6")
+        let f6 = UIImage.init(named:"frame-7")
+        let f7 = UIImage.init(named:"frame-8")*/
+
+        let width2 = f1!.cgImage!.width
+        let height2 = f1!.cgImage!.height
+
+
+        alphaMap = [[UInt8]](repeating: [UInt8](repeating: 0, count: width2), count: height2)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bytesPerPixel:Int = 4
+        let bytesPerRow = 4 * width2
+        let bitsPerComponent = 8
+        let dataSize =  width2 * bytesPerPixel * height2
+        var rawData = [UInt8](repeating: 0, count: Int(dataSize))
+        let bitmapInfo = f1!.cgImage!.bitmapInfo.rawValue
+        let context = CGContext(data: &rawData, width: width2, height: height2, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+
+        context.draw(f1!.cgImage!, in: CGRect(x: 0, y: 0, width: width2, height: height2))
+
+        var byteIndex = 0
+
+        // Iterate through pixels
+        while byteIndex < dataSize {
+
+            // Get Column and Row of current pixel
+            let column =  ((byteIndex / 4) % (bytesPerRow/4))
+            let row = ((byteIndex - (column*4)) / bytesPerRow )
+
+            alphaMap![row][column] = rawData[byteIndex + 3]
+            byteIndex += 4
+        }
+        imageView.image = f1JPG
+        imgInFrame = img!
+        img = f1JPG!.cgImage!
+        width = img!.width
+        height = img!.height
+        labelX.text = "\(Int(imageView.image!.size.width))"
+        labelY.text = "\(Int(imageView.image!.size.height))"
+        seamMap = nil
+        seam = nil
+        energyMap = nil
+        prov = nil
+
+
+        print(f1JPG!.cgImage!.width == f1!.cgImage!.width)
+        print(f1JPG!.cgImage!.height == f1!.cgImage!.height)
+        //imageView.image = UIImage(cgImage:f1!.cgImage!)
+
+
+    }
+
+    func calculateDifference() -> [Int] {
+        var counterHeight = 0
+        var counterWidth = 0
+        for i in 0..<height {
+            if(alphaMap![i][0] == 0) {
+                counterHeight += 1
+            }
+        }
+        for i in 0..<width {
+            if(alphaMap![0][i] == 0) {
+                counterWidth += 1
+            }
+        }
+        counterHeight = counterHeight - imgInFrame!.height
+        counterWidth = counterWidth - imgInFrame!.width
+        print([counterWidth, counterHeight])
+        return [counterWidth, counterHeight]
+    }
+
+    func placeImageInFrame() {
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let bytesPerPixel:Int = 4
+        let bytesPerRow = 4 * width
+        let bitsPerComponent = 8
+        let dataSize =  width * bytesPerPixel * height
+        var rawData = [UInt8](repeating: 0, count: Int(dataSize))
+        let bitmapInfo = img!.bitmapInfo.rawValue
+        let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+
+        let bytesPerRowImg = 4 * imgInFrame!.width
+        var rawDataImg = [UInt8](repeating: 0, count: Int(dataSize))
+        let bitmapInfoImg = imgInFrame!.bitmapInfo.rawValue
+        let contextImg = CGContext(data: &rawDataImg, width: imgInFrame!.width, height: imgInFrame!.height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRowImg, space: colorSpace, bitmapInfo: bitmapInfoImg)!
+
+        context.draw(img!, in: CGRect(x: 0, y: 0, width: width, height: height))
+        contextImg.draw(imgInFrame!, in: CGRect(x: 0, y: 0, width: imgInFrame!.width, height: imgInFrame!.height))
+
+        var byteIndex = 0
+        var byteCounterImg = 0
+        // Iterate through pixels
+        while byteIndex < dataSize {
+
+            let r = rawData[byteIndex + 0]
+            let g = rawData[byteIndex + 1]
+            let b = rawData[byteIndex + 2]
+
+            if(r > 250 && g < 50 && b > 250) {
+                var originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
+                while(originalImageColumn > imgInFrame!.width) {
+                    byteCounterImg += 4
+                    originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
+                }
+                rawData[byteIndex + 0] = rawDataImg[byteCounterImg + 1]
+                rawData[byteIndex + 1] = rawDataImg[byteCounterImg + 2]
+                rawData[byteIndex + 2] = rawDataImg[byteCounterImg + 3]
+                byteCounterImg += 4
+            }
+            byteIndex += 4
+        }
+
+    }
 
     @IBAction func startCarving() {
 
         // get number of pixels to carve for each dimension
-        let xReductionInput = (inputX.text! as NSString).integerValue
-        let yReductionInput = (inputY.text! as NSString).integerValue
+        let xReductionInput = calculateDifference()[0]
+        let yReductionInput = calculateDifference()[1]
 
         // checks for faulty input
         if (imageView.image?.cgImage == nil){return}
@@ -147,12 +273,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             DispatchQueue.main.sync {
                 self.carveButton.isEnabled = false
                 self.selectButton.isEnabled = false
+                self.frameButton.isEnabled = false
             }
 
             let timer = ParkBenchTimer()
 
             self.carveWidth(xReductionInput: xReductionInput)
             self.carveHeight(yReductionInput: yReductionInput)
+            self.placeImageInFrame()
 
             // dump time outputs
             print("The EnergyMap took \(self.energyMapTime) seconds.")
@@ -165,6 +293,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             DispatchQueue.main.sync {
                 self.carveButton.isEnabled = true
                 self.selectButton.isEnabled = true
+                self.frameButton.isEnabled = true
             }
         }
     }
