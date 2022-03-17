@@ -121,8 +121,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         prov = nil
 
         // update extent textfields
-        labelX.text = "\(Int(imageView.image!.size.width))"
-        labelY.text = "\(Int(imageView.image!.size.height))"
+        labelX.text = "\(Int(image.cgImage!.width))"
+        labelY.text = "\(Int(image.cgImage!.height))"
     }
     @IBAction func selectFrame() {
         img = imageView.image!.cgImage!
@@ -241,6 +241,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 byteCounterImg += 4
             }
             byteIndex += 4
+        }
+        img = context.makeImage()!
+
+        // set UI in main Thread
+        DispatchQueue.main.async {
+            self.imageView.image =  UIImage(cgImage: self.img!)
+            self.imageView.setNeedsDisplay()
         }
 
     }
@@ -511,8 +518,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             rawData[byteIndex + 3] = UInt8(255)
             byteIndex += 4
         }
+        img = context.makeImage()!
         DispatchQueue.main.sync {
-            imageView.image =  UIImage(cgImage: context.makeImage()!)
+            imageView.image =  UIImage(cgImage: img!)
         }
     }
 
@@ -596,6 +604,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                         subBuffer[byteIndex + 1] = UInt8(0)
                         subBuffer[byteIndex + 2] = UInt8(0)
                         subBuffer[byteIndex + 3] = UInt8(0)
+                    }
+                    else if(column == seamColumn) {
+
+                        subBuffer[byteIndex + 3] = UInt8(255)
                     }
 
                     // shift bytes at/right of seam
