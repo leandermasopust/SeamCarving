@@ -83,12 +83,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var height = 0
     var img: CGImage? = nil
     var imgInFrame: CGImage? = nil
-    var seam: [Int]? = nil
+    var seams: [[Int]]? = nil
     var seamMap: [[CGFloat]]? = nil
     var energyMap: CGImage? = nil
     var prov: UnsafePointer<UInt8>? = nil
     var alphaMap: [[UInt8]]? = nil
     var filter = EnergyMapFilter()
+    var seamAmount = 10
+    var seamAmountCurrent = 0
     var energyMapTime = 0.0
     var seamMapTime = 0.0
     var seamTime = 0.0
@@ -116,7 +118,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         // set global variables and updated imageView
         imageView.image = image
         seamMap = nil
-        seam = nil
+        seams = nil
         energyMap = nil
         prov = nil
 
@@ -171,7 +173,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         labelX.text = "\(Int(imageView.image!.size.width))"
         labelY.text = "\(Int(imageView.image!.size.height))"
         seamMap = nil
-        seam = nil
+        seams = nil
         energyMap = nil
         prov = nil
 
@@ -222,22 +224,41 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
         var byteIndex = 0
         var byteCounterImg = 0
+        var fixRowDiff = 0
+        var FLAG = true
+        var SKIPFLAG = false
         // Iterate through pixels
         while byteIndex < dataSize {
 
             let r = rawData[byteIndex + 0]
             let g = rawData[byteIndex + 1]
             let b = rawData[byteIndex + 2]
+            var column =  ((byteIndex / 4) % (bytesPerRow/4))
+            var row = ((byteIndex - (column*4)) / bytesPerRow )
 
             if(r > 250 && g < 50 && b > 250) {
                 var originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
+                let originalImageRow = ((byteCounterImg - (originalImageColumn*4)) / bytesPerRowImg )
                 while(originalImageColumn > imgInFrame!.width) {
                     byteCounterImg += 4
                     originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
                 }
-                rawData[byteIndex + 0] = rawDataImg[byteCounterImg + 1]
-                rawData[byteIndex + 1] = rawDataImg[byteCounterImg + 2]
-                rawData[byteIndex + 2] = rawDataImg[byteCounterImg + 3]
+                // retrieve fix row difference between original image and part-to-fill
+                if(FLAG) {
+                    fixRowDiff = row - originalImageRow
+                    FLAG = false
+                }
+                // if original image is already in next row, skip byteIndex until frame image is also in next row
+                while(originalImageRow + fixRowDiff > row) {
+                    byteIndex += 4
+                    column =  ((byteIndex / 4) % (bytesPerRow/4))
+                    row = ((byteIndex - (column*4)) / bytesPerRow )
+                    SKIPFLAG = true
+                }
+                if(SKIPFLAG) { SKIPFLAG = false;continue }
+                rawData[byteIndex + 0] = rawDataImg[byteCounterImg + 0]
+                rawData[byteIndex + 1] = rawDataImg[byteCounterImg + 1]
+                rawData[byteIndex + 2] = rawDataImg[byteCounterImg + 2]
                 byteCounterImg += 4
             }
             byteIndex += 4
@@ -335,7 +356,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
             // resetting global variables
             seamMap = nil
-            seam = nil
+            seams = nil
             energyMap = nil
             prov = nil
             width = img!.width
@@ -366,7 +387,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
             // resetting global variables
             seamMap = nil
-            seam = nil
+            seams = nil
             energyMap = nil
             prov = nil
             width = img!.width
@@ -376,12 +397,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
     func carve(pixel: Int, dimension: String)  {
+        let startWidth = self.width
 
-        for _ in 0..<pixel {
+        for _ in 0..<Int(ceil(CGFloat(pixel)/CGFloat(seamAmount))) {
 
             // release memory early
             autoreleasepool {
-
+                seamAmountCurrent = min(seamAmount,  pixel - (startWidth - self.width))
+                print(seamAmountCurrent)
                 // calculate energy map
                 let timer1 = ParkBenchTimer()
                 self.energyMap = self.calculateEnergyMap()
@@ -390,25 +413,28 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
                 // calculate seam map
                 let timer2 = ParkBenchTimer()
-                self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam, lastSeamMap: &self.seamMap)
+                self.calculateSeamMap(energyMap: self.energyMap, lastSeams: self.seams)
                 seamMapTime += timer2.stop()
 
                 // calculate seam
                 let timer3 = ParkBenchTimer()
-                self.seam = self.calculateSeam(seamMap: self.seamMap!)
+                self.seams = self.calculateSeams(seamMap: self.seamMap!)
                 seamTime += timer3.stop()
 
                 // remove seam
                 let timer4 = ParkBenchTimer()
-                self.removeSeam(inputImage: self.img!, seam: self.seam!)
+                for seam in seams! {
+                    self.removeSeam(inputImage: self.img!,seam: seam)
+                }
+
                 seamRemovalTime += timer4.stop()
 
                 // set correct width/height
                 if dimension == "height" {
-                    self.width = self.width-1
+                    self.width = self.width-seamAmountCurrent
                 }
                 if dimension == "width" {
-                    self.width = self.width-1
+                    self.width = self.width-seamAmountCurrent
                 }
 
                 // set UI in main Thread
@@ -433,13 +459,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         return outputImage
     }
 
-    func calculateSeamMap(energyMap: CGImage!, lastSeam: [Int]?, lastSeamMap: inout [[CGFloat]]?){
-        if(lastSeamMap == nil || lastSeam == nil) {
+    func calculateSeamMap(energyMap: CGImage!, lastSeams: [[Int]]?){
             var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
             for y in 0...(height-1) {
                 for x in 0...(width-1) {
                     let red = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
-                    if(x == 0 || x == (width-1)) {
+                    if(alphaMap![y][x] == 255) {
+                        map[y][x] = CGFloat.greatestFiniteMagnitude
+                    }
+                    else if(x == 0 || x == (width-1)) {
                         // workaround to avoid edge-cutting
                         map[y][x] = CGFloat.greatestFiniteMagnitude
                     }
@@ -451,28 +479,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     }
                 }
             }
-            lastSeamMap = map
-        }
-        else {
-            for y in 0...(height-1) {
-                for x in (seam![y] - y - 1)...(seam![y] + y) {
-                    if(x > (width-1) || x  < 0) {
-                        continue
-                    }
-                    let red = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
-                    if(x == 0 || x == (width-1)) {
-                        // workaround to avoid edge-cutting
-                        lastSeamMap![y][x] = CGFloat.greatestFiniteMagnitude
-                    }
-                    else if(y == 0) {
-                        lastSeamMap![y][x] = red
-                    }
-                    else {
-                        lastSeamMap![y][x] = min(min(lastSeamMap![y-1][x-1], lastSeamMap![y-1][x]), lastSeamMap![y-1][x+1]) + red
-                    }
-                }
-            }
-        }
+        seamMap = map
     }
 
     func showSeamMap(seamMap: [[CGFloat]]) {
@@ -525,45 +532,52 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
 
-    func calculateSeam(seamMap: [[CGFloat]]) -> [Int] {
+    func calculateSeams(seamMap: [[CGFloat]]) -> [[Int]] {
         // returns array of length image.size.height where the value is the index
         // 0 <= x <= image.size.width with x being part of the seam
-        var seamIndex = [Int](repeating: 0, count: height)
+        var seams = [[Int]](repeating: [Int](repeating: 0, count: height), count: seamAmountCurrent)
+        var lastIndicesToIgnore: [Int] = [Int](repeating: 0, count: seamAmountCurrent)
+        for i in 0..<seamAmountCurrent {
+            var seamIndex = [Int](repeating: 0, count: height)
 
-        // calculate start of seam from bottom
-        let y = height-1
-        var min = CGFloat.greatestFiniteMagnitude
-        var minIndex = -1
-        for x in 0...width-1 {
-            if(min > seamMap[y][x]) {
-                min = seamMap[y][x]
-                minIndex = x
-            }
-        }
-        seamIndex[y] = minIndex
-        //print("Carving at: ")
-        //print(minIndex)
-
-        // calculate rest of seam by looking at the top neighbour values
-        for y in stride(from: height-2, through: 0, by: -1) {
-            let xValueOfSeamPartBelow = seamIndex[y+1]
+            // calculate start of seam from bottom
+            let y = height-1
             var min = CGFloat.greatestFiniteMagnitude
             var minIndex = -1
-            for x in xValueOfSeamPartBelow-1...xValueOfSeamPartBelow+1 {
-                if(x <= -1) {
-                    continue
-                }
-                if(x >= width) {
-                    continue
-                }
-                if(min > seamMap[y][x]) {
+            for x in 0...width-1 {
+                if(min > seamMap[y][x] && !lastIndicesToIgnore.contains(x)) {
                     min = seamMap[y][x]
                     minIndex = x
                 }
             }
             seamIndex[y] = minIndex
+            lastIndicesToIgnore[i] = minIndex
+            //print("Carving at: ")
+            //print(minIndex)
+
+            // calculate rest of seam by looking at the top neighbour values
+            for y in stride(from: height-2, through: 0, by: -1) {
+                let xValueOfSeamPartBelow = seamIndex[y+1]
+                var min = CGFloat.greatestFiniteMagnitude
+                var minIndex = -1
+                for x in xValueOfSeamPartBelow-1...xValueOfSeamPartBelow+1 {
+                    if(x <= -1) {
+                        continue
+                    }
+                    if(x >= width) {
+                        continue
+                    }
+                    if(min > seamMap[y][x]) {
+                        min = seamMap[y][x]
+                        minIndex = x
+                    }
+                }
+                seamIndex[y] = minIndex
+            }
+            seams[i] = seamIndex
         }
-        return seamIndex
+        print(lastIndicesToIgnore)
+        return seams
     }
 
     func cropLastColumn(image: CGImage) -> CGImage {
@@ -573,67 +587,67 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
     func removeSeam(inputImage: CGImage, seam:[Int]) {
-        let colorSpace = inputImage.colorSpace!
-        let bytesPerRow = inputImage.bytesPerRow
-        let bitsPerComponent = inputImage.bitsPerComponent
-        let bitmapInfo = inputImage.bitmapInfo.rawValue
-        let dataSize = inputImage.bytesPerRow * inputImage.height
+            let colorSpace = inputImage.colorSpace!
+            let bytesPerRow = inputImage.bytesPerRow
+            let bitsPerComponent = inputImage.bitsPerComponent
+            let bitmapInfo = inputImage.bitmapInfo.rawValue
+            let dataSize = inputImage.bytesPerRow * inputImage.height
 
-        // retrieve input image data and store in rawDataOriginal
-        var rawDataOriginal = [UInt8](repeating: 0, count: Int(dataSize))
-        let context = CGContext(data: &rawDataOriginal, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
-        context.draw(inputImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+            // retrieve input image data and store in rawDataOriginal
+            var rawDataOriginal = [UInt8](repeating: 0, count: Int(dataSize))
+            let context = CGContext(data: &rawDataOriginal, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+            context.draw(inputImage, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        // initialize rawData array and fill it with new image data without seam
-        var rawData = Array<UInt8>(unsafeUninitializedCapacity: (inputImage.bytesPerRow) * height, initializingWith: { (subBuffer: inout UnsafeMutableBufferPointer<UInt8>, subCount: inout Int) in
-            subCount = (inputImage.bytesPerRow / 4) * height
+            // initialize rawData array and fill it with new image data without seam
+            var rawData = Array<UInt8>(unsafeUninitializedCapacity: (inputImage.bytesPerRow) * height, initializingWith: { (subBuffer: inout UnsafeMutableBufferPointer<UInt8>, subCount: inout Int) in
+                subCount = (inputImage.bytesPerRow / 4) * height
 
-            // iterate over rows
-            DispatchQueue.concurrentPerform(iterations: (height)) { row in
+                // iterate over rows
+                DispatchQueue.concurrentPerform(iterations: (height)) { row in
 
-                // get column of seam for this specific row
-                let seamColumn = seam[Int(row)]
+                    // get column of seam for this specific row
+                    let seamColumn = seam[Int(row)]
 
-                // iterate over columns
-                DispatchQueue.concurrentPerform(iterations: (inputImage.bytesPerRow / 4)) { column in
+                    // iterate over columns
+                    DispatchQueue.concurrentPerform(iterations: (inputImage.bytesPerRow / 4)) { column in
 
-                    // calculate current index
-                    let byteIndex = (inputImage.bytesPerRow * row) + (4*column)
-                    if(column >= width-1) {
-                        subBuffer[byteIndex + 0] = UInt8(0)
-                        subBuffer[byteIndex + 1] = UInt8(0)
-                        subBuffer[byteIndex + 2] = UInt8(0)
-                        subBuffer[byteIndex + 3] = UInt8(0)
-                    }
-                    else if(column == seamColumn) {
+                        // calculate current index
+                        let byteIndex = (inputImage.bytesPerRow * row) + (4*column)
+                        if(column >= width-1) {
+                            subBuffer[byteIndex + 0] = UInt8(0)
+                            subBuffer[byteIndex + 1] = UInt8(0)
+                            subBuffer[byteIndex + 2] = UInt8(0)
+                            subBuffer[byteIndex + 3] = UInt8(0)
+                        }
+                        else if(column == seamColumn) {
 
-                        subBuffer[byteIndex + 3] = UInt8(255)
-                    }
+                            subBuffer[byteIndex + 3] = UInt8(255)
+                        }
 
-                    // shift bytes at/right of seam
-                    else if(column < width-1 && column >= seamColumn) {
-                        subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 4])
-                        subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 5])
-                        subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 6])
-                        subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 7])
-                    }
+                        // shift bytes at/right of seam
+                        else if(column < width-1 && column >= seamColumn) {
+                            subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 4])
+                            subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 5])
+                            subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 6])
+                            subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 7])
+                        }
 
-                    // left of seam => copy values from original buffer
-                    else {
-                        subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 0])
-                        subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 1])
-                        subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 2])
-                        subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 3])
+                        // left of seam => copy values from original buffer
+                        else {
+                            subBuffer[byteIndex + 0] = UInt8(rawDataOriginal[byteIndex + 0])
+                            subBuffer[byteIndex + 1] = UInt8(rawDataOriginal[byteIndex + 1])
+                            subBuffer[byteIndex + 2] = UInt8(rawDataOriginal[byteIndex + 2])
+                            subBuffer[byteIndex + 3] = UInt8(rawDataOriginal[byteIndex + 3])
+                        }
                     }
                 }
-            }
-        })
-        let context2 = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
-        // Retrieve image from memory context.
-        let resultImage = context2.makeImage()!
-        let imageCropped = cropLastColumn(image:resultImage)
-        img = imageCropped
-    }
+            })
+            let context2 = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+            // Retrieve image from memory context.
+            let resultImage = context2.makeImage()!
+            let imageCropped = cropLastColumn(image:resultImage)
+            img = imageCropped
+        }
 }
 
 
