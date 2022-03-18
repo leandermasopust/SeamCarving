@@ -290,6 +290,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 rawData[byteIndex + 0] = rawDataImg[byteCounterImg + 0]
                 rawData[byteIndex + 1] = rawDataImg[byteCounterImg + 1]
                 rawData[byteIndex + 2] = rawDataImg[byteCounterImg + 2]
+
+
                 byteCounterImg += 4
             }
             byteIndex += 4
