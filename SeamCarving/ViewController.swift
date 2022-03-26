@@ -117,6 +117,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         guard let image = info[.editedImage] as? UIImage else {return}
         self.dismiss(animated: true, completion: { () -> Void in})
 
+        // enable frame selection
+        self.frameButton.isEnabled = true
+
+        // disable carving without choosing a frame
+        self.carveButton.isEnabled = false
+
         // set global variables and updated imageView
         imageView.image = image
         seamMap = nil
@@ -130,9 +136,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
     @IBAction func selectFrame() {
         img = imageView.image!.cgImage!
-        let f1 = UIImage.init(named:"frame-1")
-        let f1JPG = UIImage.init(named:"frame-1.bmp")
-
+        var f1 = UIImage.init(named:"frame-1")
         let width2 = f1!.cgImage!.width
         let height2 = f1!.cgImage!.height
 
@@ -156,13 +160,22 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let column =  ((byteIndex / 4) % (bytesPerRow/4))
             let row = ((byteIndex - (column*4)) / bytesPerRow )
 
+            if(column <= 1000 && row <= 1000 && column >= 990 && row >= 990) {
+                print(rawData[byteIndex + 0] )
+                print(rawData[byteIndex + 1] )
+                print(rawData[byteIndex + 2] )
+                print(rawData[byteIndex + 3] )
+            }
+
             // retrieve alpha channel for explicit pixel that are not to carve (a=255)
             alphaMap![row][column] = rawData[byteIndex + 3]
+
             byteIndex += 4
         }
-        imageView.image = f1JPG
+        let noalpha = UIImage.init(named:"frame-1-noalpha")
+        imageView.image = noalpha
         imgInFrame = img!
-        img = f1JPG!.cgImage!
+        img = noalpha!.cgImage!
         width = img!.width
         height = img!.height
         labelX.text = "\(Int(imageView.image!.size.width))"
@@ -171,7 +184,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         seams = nil
         energyMap = nil
         prov = nil
-
+        self.carveButton.isEnabled = true
+        self.frameButton.isEnabled = false
     }
     func matrixTranspose(matrix: [[UInt8]]) {
         var newMatrix = [[UInt8]](repeating:[UInt8](repeating: 0, count: matrix.count), count: matrix[0].count)
@@ -207,10 +221,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let row = ((byteIndex - (column*4)) / bytesPerRow )
 
             // while key color and remains in same line, count for width
-            if(r > 250 && g < 50 && b > 250 && row == height/2) {
+            if(r >= 254 && g <= 1 && b >= 254 && row == height/2) {
                 counterWidth += 1
             }
-            if(r > 250 && g < 50 && b > 250 && column == width/2) {
+            if(r >= 254 && g <= 1 && b >= 254 && column == width/2) {
                 counterHeight += 1
             }
             byteIndex += 4
