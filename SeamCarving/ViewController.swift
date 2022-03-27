@@ -89,6 +89,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var energyMap: CGImage? = nil
     var prov: UnsafePointer<UInt8>? = nil
     var alphaMap: [[UInt8]]? = nil
+    var frameFileName: String = ""
     var filter = EnergyMapFilter()
     var seamAmount = 1
     var seamAmountCurrent = 0
@@ -136,7 +137,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
     @IBAction func selectFrame() {
         img = imageView.image!.cgImage!
-        var f1 = UIImage.init(named:"frame-1")
+        self.frameFileName = "frame-1"
+        let f1 = UIImage.init(named:self.frameFileName)
         let width2 = f1!.cgImage!.width
         let height2 = f1!.cgImage!.height
 
@@ -159,13 +161,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             // Get Column and Row of current pixel
             let column =  ((byteIndex / 4) % (bytesPerRow/4))
             let row = ((byteIndex - (column*4)) / bytesPerRow )
-
-            if(column <= 1000 && row <= 1000 && column >= 990 && row >= 990) {
-                print(rawData[byteIndex + 0] )
-                print(rawData[byteIndex + 1] )
-                print(rawData[byteIndex + 2] )
-                print(rawData[byteIndex + 3] )
-            }
 
             // retrieve alpha channel for explicit pixel that are not to carve (a=255)
             alphaMap![row][column] = rawData[byteIndex + 3]
@@ -451,33 +446,58 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     func carve(pixel: Int, dimension: String)  {
         let startWidth = self.width
+        var cached = false
+        var precalculatedSeams: [[Int]] = []
+        let jsonURL = Bundle.main.url(forResource: "precalculatedSeams", withExtension: "json")
+        let jsonData = try! Data(contentsOf: jsonURL!)
+        let jsonDecoder = JSONDecoder()
+        var seamDict = try! jsonDecoder.decode(Dictionary<String, Dictionary<String,[[Int]]>>.self, from: jsonData)
+        if seamDict[frameFileName] != nil{
+            if seamDict[frameFileName]![dimension] != nil {
+                cached = true
+                precalculatedSeams = seamDict[frameFileName]![dimension]!
+            }
+        }
 
-        for _ in 0..<Int(ceil(CGFloat(pixel)/CGFloat(seamAmount))) {
+        if(!cached) {
+            seamDict[frameFileName] = Dictionary<String, [[Int]]>()
+        }
 
+        for x in 0..<pixel {
             // release memory early
             autoreleasepool {
                 seamAmountCurrent = min(seamAmount,  pixel - (startWidth - self.width))
-                print(seamAmountCurrent)
+                if(!cached) {
+                    // calculate energy map
+                    let timer1 = ParkBenchTimer()
+                    self.energyMap = self.calculateEnergyMap()
+                    self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
+                    energyMapTime += timer1.stop()
 
-                // calculate energy map
-                let timer1 = ParkBenchTimer()
-                self.energyMap = self.calculateEnergyMap()
-                self.prov = CFDataGetBytePtr(self.energyMap!.dataProvider!.data)
-                energyMapTime += timer1.stop()
+                    // calculate seam map
+                    let timer2 = ParkBenchTimer()
+                    self.calculateSeamMap(energyMap: self.energyMap, lastSeams: self.seams)
+                    seamMapTime += timer2.stop()
 
-                // calculate seam map
-                let timer2 = ParkBenchTimer()
-                self.calculateSeamMap(energyMap: self.energyMap, lastSeams: self.seams)
-                seamMapTime += timer2.stop()
-
-                // calculate seam
-                let timer3 = ParkBenchTimer()
-                self.seams = self.calculateSeams(seamMap: self.seamMap!)
-                seamTime += timer3.stop()
-
+                    // calculate seam
+                    let timer3 = ParkBenchTimer()
+                    self.seams = self.calculateSeams(seamMap: self.seamMap!)
+                    var pref : [[Int]] = []
+                    if seamDict[frameFileName] != nil {
+                        if seamDict[frameFileName]![dimension] != nil {
+                            pref = seamDict[frameFileName]![dimension]!
+                        }
+                    }
+                    pref.append(self.seams![0])
+                    seamDict[frameFileName]![dimension] = pref
+                    seamTime += timer3.stop()
+                }
+                else {
+                    self.seams = [precalculatedSeams[x]]
+                }
                 // remove seams
                 let timer4 = ParkBenchTimer()
-                for seam in seams! {
+                for seam in self.seams! {
                     self.removeSeam(inputImage: self.img!,seam: seam)
                 }
                 seamRemovalTime += timer4.stop()
@@ -489,7 +509,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 if dimension == "width" {
                     self.width = self.width-seamAmountCurrent
                 }
-
                 // set UI in main Thread
                 DispatchQueue.main.async {
                     if dimension == "height" {
@@ -510,6 +529,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         else {
             carvedHeight = 0
         }
+        let jsonEncoder = JSONEncoder()
+        let encodeSeams = try! jsonEncoder.encode(seamDict)
+        let encodedStringSeam = String(data: encodeSeams, encoding: .utf8)!
+        let data = Data(encodedStringSeam.utf8)
+        let fileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("precalculatedSeams.json")
+        try! data.write(to: fileURL, options: .atomic)
+        print(fileURL)
     }
 
     func calculateEnergyMap() -> CGImage {
