@@ -10,6 +10,24 @@ import CoreImage.CIFilterBuiltins
 import UIKit
 import CoreFoundation
 
+//https://stackoverflow.com/questions/54013155/swift-how-to-copy-files-from-app-bundle-to-documents-folder-when-app-runs-for-f
+func copyFilesFromBundleToDocumentsFolderWith(fileExtension: String) {
+    if let resPath = Bundle.main.resourcePath {
+        do {
+            let dirContents = try FileManager.default.contentsOfDirectory(atPath: resPath)
+            let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            let filteredFiles = dirContents.filter{ $0.contains(fileExtension)}
+            for fileName in filteredFiles {
+                if let documentsURL = documentsURL {
+                    let sourceURL = Bundle.main.bundleURL.appendingPathComponent(fileName)
+                    let destURL = documentsURL.appendingPathComponent(fileName)
+                    do { try FileManager.default.copyItem(at: sourceURL, to: destURL) } catch { }
+                }
+            }
+        } catch { }
+    }
+}
+
 //https://stackoverflow.com/questions/24755558/measure-elapsed-time-in-swift
 class ParkBenchTimer {
 
@@ -448,10 +466,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let startWidth = self.width
         var cached = false
         var precalculatedSeams: [[Int]] = []
-        let jsonURL = Bundle.main.url(forResource: "precalculatedSeams", withExtension: "json")
-        let jsonData = try! Data(contentsOf: jsonURL!)
+        let jsonURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("precalculatedSeams.json")
+        let jsonData = try! Data(contentsOf: jsonURL)
         let jsonDecoder = JSONDecoder()
-        var seamDict = try! jsonDecoder.decode(Dictionary<String, Dictionary<String,[[Int]]>>.self, from: jsonData)
+        var seamDict = try! jsonDecoder.decode([String: [String:[[Int]]]].self, from: jsonData)
         if seamDict[frameFileName] != nil{
             if seamDict[frameFileName]![dimension] != nil {
                 cached = true
@@ -462,7 +480,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         if(!cached) {
             seamDict[frameFileName] = Dictionary<String, [[Int]]>()
         }
-
+        print(seamDict[frameFileName]!["height"] != nil )
+        print(seamDict[frameFileName]!["width"] != nil )
         for x in 0..<pixel {
             // release memory early
             autoreleasepool {
@@ -494,6 +513,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 }
                 else {
                     self.seams = [precalculatedSeams[x]]
+                    print("cache-hit")
                 }
                 // remove seams
                 let timer4 = ParkBenchTimer()
@@ -552,7 +572,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
                     // right half of frame moves to left, so checking for originalSized alphaMap with difference only on right half, original x value on left half
 
-                    // CAUTION: this is frame - corner specific, in general it's probably best to recalculate alphaMap at the start of every carving by also "removing the seam" of the alphaMap
+                    // CAUTION: this is frame - corner specific, in general it's probably best to recalculate alphaMap at the start of every carving by also "removing the seam" from the alphaMap
 
                     var testX = x
                     if(x > width/2) {
@@ -633,7 +653,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     func calculateSeams(seamMap: [[CGFloat]]) -> [[Int]] {
 
-        // returns array of length image.size.height where the value is the index
+        // returns arrays of length image.size.height where the value is the index
         // 0 <= x <= image.size.width with x being part of the seam
         var seams = [[Int]](repeating: [Int](repeating: 0, count: height), count: seamAmountCurrent)
         var lastIndicesToIgnore: [Int] = [Int](repeating: 0, count: seamAmountCurrent)
