@@ -477,11 +477,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             }
         }
 
-        if(!cached) {
+        if(seamDict[frameFileName] == nil) {
             seamDict[frameFileName] = Dictionary<String, [[Int]]>()
         }
         print(seamDict[frameFileName]!["height"] != nil )
         print(seamDict[frameFileName]!["width"] != nil )
+        for (key, _) in seamDict[frameFileName]! {
+          print("\(key)")
+        }
         for x in 0..<pixel {
             // release memory early
             autoreleasepool {
