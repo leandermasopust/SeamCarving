@@ -49,6 +49,16 @@ extension UIViewController {
     }
 }
 
+class ImageSaver: NSObject {
+    func writeToPhotoAlbum(image: UIImage) {
+        UIImageWriteToSavedPhotosAlbum(image, self, #selector(saveCompleted), nil)
+    }
+
+    @objc func saveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        print("Save finished!")
+    }
+}
+
 // custom CIFilter to calculate energyMap with metal kernel
 class EnergyMapFilter: CIFilter {
     private let kernel: CIKernel
@@ -94,6 +104,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     // width and height of internal CGImage, for height carving width = height of picture and height = width of picture
     var width = 0
     var height = 0
+
+    // original frame width and height
+    var originalFrameWidth = 0
+    var originalFrameHeight = 0
 
     var frame: CGImage? = nil
     var img: CGImage? = nil
@@ -169,18 +183,18 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
         // load frame image
         let f1 = UIImage.init(named:self.frameFileName)
-        let width2 = f1!.cgImage!.width
-        let height2 = f1!.cgImage!.height
-        self.alphaMap = [[UInt8]](repeating: [UInt8](repeating: 0, count: width2), count: height2)
+        originalFrameWidth = f1!.cgImage!.width
+        originalFrameHeight = f1!.cgImage!.height
+        self.alphaMap = [[UInt8]](repeating: [UInt8](repeating: 0, count: originalFrameWidth), count: originalFrameHeight)
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bytesPerPixel:Int = 4
-        let bytesPerRow = 4 * width2
+        let bytesPerRow = 4 * originalFrameWidth
         let bitsPerComponent = 8
-        let dataSize =  width2 * bytesPerPixel * height2
+        let dataSize =  originalFrameWidth * bytesPerPixel * originalFrameHeight
         var rawData = [UInt8](repeating: 0, count: Int(dataSize))
         let bitmapInfo = f1!.cgImage!.bitmapInfo.rawValue
-        let context = CGContext(data: &rawData, width: width2, height: height2, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
-        context.draw(f1!.cgImage!, in: CGRect(x: 0, y: 0, width: width2, height: height2))
+        let context = CGContext(data: &rawData, width: originalFrameWidth, height: originalFrameHeight, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+        context.draw(f1!.cgImage!, in: CGRect(x: 0, y: 0, width: originalFrameWidth, height: originalFrameHeight))
 
         var byteIndex = 0
 
@@ -218,15 +232,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     }
 
-    // helper function to transpose a given matrix of UInt8
-    func matrixTranspose(matrix: [[UInt8]]) -> [[UInt8]] {
+    // helper function to transpose alphaMap matrix
+    func transposeAlphaMap(matrix: [[UInt8]]) {
         var newMatrix = [[UInt8]](repeating:[UInt8](repeating: 0, count: matrix.count), count: matrix[0].count)
         for y in 0..<matrix.count {
             for x in 0..<matrix[y].count {
                 newMatrix[x][y] = matrix[y][x]
             }
         }
-        return newMatrix
+        alphaMap! = newMatrix
     }
 
     // calculate difference to carve by calculating (255,0,255) part of frame
@@ -254,16 +268,17 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let row = ((byteIndex - (column*4)) / bytesPerRow )
 
             // key colors differ in given frame files (e.g. 254,1,254 in frame-1)
-            if(r >= 254 && g <= 1 && b >= 254 && row == height/2) {
+            if(r > 250 && g < 50 && b > 250 && row == height/2) {
                 counterWidth += 1
             }
-            if(r >= 254 && g <= 1 && b >= 254 && column == width/2) {
+            if(r > 250 && g < 50 && b > 250 && column == width/2) {
                 counterHeight += 1
             }
             byteIndex += 4
         }
         counterWidth -= img!.width
         counterHeight -= img!.height
+        print([counterWidth, counterHeight])
         return [counterWidth, counterHeight]
     }
 
@@ -330,8 +345,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
     @IBAction func startCarving() {
+
         // set global variables
-        frame = imageView.image!.cgImage!
         width = frame!.width
         height = frame!.height
 
@@ -363,7 +378,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             self.carveWidth(xReductionInput: xReductionInput)
             self.carveHeight(yReductionInput: yReductionInput)
             self.placeImageInFrame()
-
+            ImageSaver().writeToPhotoAlbum(image: self.imageView.image!)
             // dump time outputs
             print("The EnergyMap took \(self.energyMapTime) seconds.")
             print("The SeamMap took \(self.seamMapTime) seconds.")
@@ -377,6 +392,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 self.selectButton.isEnabled = true
                 self.frameButton.isEnabled = true
             }
+
+            // reset global vars
+            self.originalFrameWidth = 0
+            self.originalFrameHeight = 0
         }
     }
     func carveWidth(xReductionInput: Int) {
@@ -423,7 +442,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         for i in 0..<alphaMap!.count {
             alphaMap![i] = alphaMap![i].reversed()
         }
-        self.alphaMap! = matrixTranspose(matrix: alphaMap!)
+        transposeAlphaMap(matrix: alphaMap!)
 
         // start carving
         carve(pixel: yReductionInput, dimension: "height")
@@ -484,7 +503,16 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         }
         // if frame seams were not precalculated, initialize that part of the dict
         if(seamDict[frameFileName] == nil) {
+            var dim = 0
+            if(dimension == "width") {
+                dim = originalFrameHeight
+            }
+            else {
+                dim = originalFrameWidth
+            }
+            let map = [[Int]](repeating: [], count: dim)
             seamDict[frameFileName] = Dictionary<String, [[Int]]>()
+            seamDict[frameFileName]![dimension] = map
         }
 
         for x in 0..<pixel {
@@ -497,9 +525,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             // release memory early to avoid memoryoverflow
             autoreleasepool {
                 seamAmountCurrent = min(seamAmount,  pixel - (startWidth - self.width))
-
+                var indexOfSeamDict = 0
+                if dimension == "width" {
+                    indexOfSeamDict = x
+                }
+                else {
+                    indexOfSeamDict = originalFrameWidth - height + x
+                }
                 // calculate seamMap, energyMap, seam if not cached
-                if(!cached) {
+                if(!cached || seamDict[frameFileName]![dimension]![indexOfSeamDict].count == 0) {
 
                     // calculate energy map
                     let timer1 = ParkBenchTimer()
@@ -515,13 +549,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     // calculate seam
                     let timer3 = ParkBenchTimer()
                     self.seams = self.calculateSeams(seamMap: self.seamMap!)
-                    var pref : [[Int]] = []
-                    if seamDict[frameFileName] != nil {
-                        if seamDict[frameFileName]![dimension] != nil {
-                            pref = seamDict[frameFileName]![dimension]!
-                        }
-                    }
-                    pref.append(self.seams![0])
+                    var pref : [[Int]] = seamDict[frameFileName]![dimension]!
+
+                    pref[indexOfSeamDict] = self.seams![0]
                     seamDict[frameFileName]![dimension] = pref
                     seamTime += timer3.stop()
                 }
