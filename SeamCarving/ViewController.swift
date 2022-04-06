@@ -465,9 +465,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         var cached = false
         var precalculatedSeams: [[Int]] = []
 
-        // read precalculatedSeams from json
+        // read precalculatedSeams from json, get from Bundle at after first build
         let jsonURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("precalculatedSeams.json")
-        let jsonData = try! Data(contentsOf: jsonURL)
+        let jsonURLBundle = Bundle.main.path(forResource: "precalculatedSeams", ofType: "json")
+        var jsonData: Data = Data()
+        do {
+            jsonData = try Data(contentsOf: jsonURL)
+        } catch {
+            jsonData = try! Data(contentsOf: URL(fileURLWithPath: jsonURLBundle!))
+        }
         let jsonDecoder = JSONDecoder()
         var seamDict = try! jsonDecoder.decode([String: [String:[[Int]]]].self, from: jsonData)
         if seamDict[frameFileName] != nil{
@@ -579,6 +585,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
     func calculateSeamMap(energyMap: CGImage!, lastSeams: [[Int]]?){
+        if(seamMap == nil || lastSeams == nil || seamAmount != 1) {
             var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
             for y in 0...(height-1) {
                 for x in 0...(width-1) {
@@ -601,7 +608,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     if(alphaMap![testY][testX] == 255) {
                         map[y][x] = CGFloat.greatestFiniteMagnitude
                     }
-                    
+
                     // workaround to avoid edge-cutting, set left- and rightmost pixelcolumn to high value
                     else if(x == 0 || x == (width-1)) {
                         map[y][x] = CGFloat.greatestFiniteMagnitude
@@ -618,7 +625,28 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     }
                 }
             }
-        seamMap = map
+            seamMap = map
+        }
+        else {
+            for y in 0...(height-1) {
+                for x in (seams![0][y] - y - 1)...(seams![0][y] + y) {
+                    if(x > (width-1) || x  < 0) {
+                        continue
+                        }
+                    let energy = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
+                    if(x == 0 || x == (width-1)) {
+                        // workaround to avoid edge-cutting
+                        seamMap![y][x] = CGFloat.greatestFiniteMagnitude
+                    }
+                    else if(y == 0) {
+                        seamMap![y][x] = energy
+                    }
+                    else {
+                        seamMap![y][x] = min(min(seamMap![y-1][x-1], seamMap![y-1][x]), seamMap![y-1][x+1]) + energy
+                    }
+                }
+            }
+        }
     }
 
     // visualize given seamMap
