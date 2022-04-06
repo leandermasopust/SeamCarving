@@ -79,7 +79,7 @@ class EnergyMapFilter: CIFilter {
 class ViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
 
     // UI components
-    @IBOutlet var  imageView: UIImageView!
+    @IBOutlet var imageView: UIImageView!
     @IBOutlet var selectButton: UIButton!
     @IBOutlet var carveButton: UIButton!
     @IBOutlet var frameButton: UIButton!
@@ -197,7 +197,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             byteIndex += 4
         }
 
-        // load extra image without alpha information since the other .png files have RGBA = (0,0,0,0) everywhere, where alpha = 0. workaround for specific given frame files. 
+        // load extra image without alpha information since the other .png files have RGBA = (0,0,0,0) everywhere, where alpha = 0. workaround for specific given frame files.
         let noalpha = UIImage.init(named:(self.frameFileName + "-noalpha"))
         imageView.image = noalpha
         frame = noalpha!.cgImage!
@@ -494,6 +494,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
                 // calculate seamMap, energyMap, seam if not cached
                 if(!cached) {
+
                     // calculate energy map
                     let timer1 = ParkBenchTimer()
                     self.energyMap = self.calculateEnergyMap()
@@ -561,7 +562,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             carvedHeight = 0
         }
 
-        // get json file, encode dict to json and write it back (only written into file of sandboxed device, gets lost after a clean rebuild
+        // encode dict to json and write it back (only written into file of sandboxed device, gets lost after a clean rebuild
         let jsonEncoder = JSONEncoder()
         let encodeSeams = try! jsonEncoder.encode(seamDict)
         let encodedStringSeam = String(data: encodeSeams, encoding: .utf8)!
@@ -581,12 +582,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
             for y in 0...(height-1) {
                 for x in 0...(width-1) {
-                    let red = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
+
+                    // retrieve value of energyMap for current pixel
+                    let energy = CGFloat(prov![((Int(energyMap.bytesPerRow / 4) * y) + x) * 4]) / 255.0
 
                     // right half of frame moves to left, so checking for originalSized alphaMap with difference only on right half, original x value on left half
-
                     // CAUTION: this is frame - corner specific, in general it's probably best to recalculate alphaMap at the start of every carving by also "removing the seam" from the alphaMap
-
                     var testX = x
                     if(x > width/2) {
                         testX = x + (startWidth - width)
@@ -596,18 +597,24 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                         testY = testY + carvedHeight
                     }
 
+                    // set seamMap to high value for not getting carved (alphaMap constraint)
                     if(alphaMap![testY][testX] == 255) {
                         map[y][x] = CGFloat.greatestFiniteMagnitude
                     }
+                    
+                    // workaround to avoid edge-cutting, set left- and rightmost pixelcolumn to high value
                     else if(x == 0 || x == (width-1)) {
-                        // workaround to avoid edge-cutting
                         map[y][x] = CGFloat.greatestFiniteMagnitude
                     }
+
+                    // base case, if y == 0: seamMap == energyMap
                     else if(y == 0) {
-                        map[y][x] = red
+                        map[y][x] = energy
                     }
+
+                    // DP for calculating seamMap
                     else {
-                        map[y][x] = min(min(map[y-1][x-1], map[y-1][x]),map[y-1][x+1]) + red
+                        map[y][x] = min(min(map[y-1][x-1], map[y-1][x]),map[y-1][x+1]) + energy
                     }
                 }
             }
@@ -651,6 +658,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 byteIndex += 4
                 continue
             }
+
             // normalize seam map values to 0...255 and show as grey values
             rawData[byteIndex + 0] = UInt8(Int((seamMap[row][column] / max) * 255))
             rawData[byteIndex + 1] = UInt8(Int((seamMap[row][column] / max) * 255))
