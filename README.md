@@ -11,6 +11,8 @@
         - "frame-6"
         - "frame-7"
         - "frame-8"
+        
+- currently only "frame-1" has cached seams in "precalculatedSeams.json" yet
 
 ## further comments
 
