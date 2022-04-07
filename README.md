@@ -29,5 +29,5 @@
     - thus height carving rarely hits the cache, since the width of the image that was used for the seam caching after width carving would have to be the same as the width of the current image after width carving (i recognized that issue after the presentation)
     - no issues for caching in width carving
 
-- there are issues with "frame-8", some parts of the frame have the same color as the constraint color (there might be other frames with that issue, i only tested "frame-1" and "frame-7" apart from 8, 1 and 7 are working as they should)
-    - possible solution for future work might be to make the part-to-fill constraint also part of the alpha channel (with a different value than the not-to-carve constraint) instead of using the RGB channel to avoid those issues
+- there are issues with "frame-8", some parts of the frame have the same color as the constraint color (there might be other frames with that issue, i only tested "frame-1" and "frame-7" apart from 8. 1 and 7 are working as they should)
+    - possible solution for future work might be to make the part-to-fill constraint also part of the alpha channel (with a different value than the not-to-carve constraint) instead of using the RGB channels to avoid those issues
