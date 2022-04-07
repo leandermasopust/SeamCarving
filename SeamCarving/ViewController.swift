@@ -390,6 +390,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 self.selectButton.isEnabled = true
                 self.frameButton.isEnabled = true
             }
+
+            // reset global timing vars
+            self.energyMapTime = 0.0
+            self.seamMapTime = 0.0
+            self.seamTime = 0.0
+            self.seamRemovalTime = 0.0
         }
     }
     func carveWidth(xReductionInput: Int) {
