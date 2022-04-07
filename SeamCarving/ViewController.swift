@@ -112,8 +112,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var frame: CGImage? = nil
     var image: CGImage? = nil
 
-    // seams, seamMap, energyMap of current iteration for global access
-    var seams: [[Int]]? = nil
+    // seam, seamMap, energyMap of current iteration for global access
+    var seam: [Int]? = nil
     var seamMap: [[CGFloat]]? = nil
     var energyMap: CGImage? = nil
 
@@ -129,11 +129,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     // single, global instance of EnergyMapFilter
     var filter = EnergyMapFilter()
 
-    // part of experiment to carve multiple seams without recalculating seamMap/energyMap
-    var seamAmount = 1
-    var seamAmountCurrent = 0
+    // store startWidth and carvedWidth of frame
     var startWidth = 0
-    var carvedHeight = 0
+    var carvedWidth = 0
 
     // recording the time used for each calculation step
     var energyMapTime = 0.0
@@ -169,7 +167,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         // set global variables and updated imageView
         imageView.image = image
         seamMap = nil
-        seams = nil
+        seam = nil
         energyMap = nil
         energyMapDataPointer = nil
 
@@ -223,7 +221,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         labelX.text = "\(Int(imageView.image!.size.width))"
         labelY.text = "\(Int(imageView.image!.size.height))"
         seamMap = nil
-        seams = nil
+        seam = nil
         energyMap = nil
         energyMapDataPointer = nil
         self.carveButton.isEnabled = true
@@ -426,7 +424,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
             // resetting global variables
             seamMap = nil
-            seams = nil
+            seam = nil
             energyMap = nil
             energyMapDataPointer = nil
             width = frame!.width
@@ -465,7 +463,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
             // resetting global variables
             seamMap = nil
-            seams = nil
+            seam = nil
             energyMap = nil
             energyMapDataPointer = nil
             width = frame!.width
@@ -476,7 +474,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     func carve(pixel: Int, dimension: String)  {
 
-        let startWidth = self.width
         var cached = false
         var precalculatedSeams: [[Int]] = []
 
@@ -512,7 +509,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
             // release memory early to avoid memoryoverflow
             autoreleasepool {
-                seamAmountCurrent = min(seamAmount,  pixel - (startWidth - self.width))
 
                 // calculate seamMap, energyMap, seam if not cached or if seam length doesn't match the height of the CGImage
                 if(!cached || seamDict[frameFileName]![dimension]![x].count == 0 || seamDict[frameFileName]![dimension]![x].count != height) {
@@ -525,41 +521,34 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
                     // calculate seam map
                     let timer2 = ParkBenchTimer()
-                    self.calculateSeamMap(energyMap: self.energyMap, lastSeams: self.seams)
+                    self.calculateSeamMap(energyMap: self.energyMap, lastSeam: self.seam)
                     seamMapTime += timer2.stop()
 
                     // calculate seam
                     let timer3 = ParkBenchTimer()
-                    self.seams = self.calculateSeams(seamMap: self.seamMap!)
+                    self.seam = self.calculateSeam(seamMap: self.seamMap!)
                     var pref: [[Int]] = []
                     if(seamDict[frameFileName]![dimension] != nil) {
                         pref = seamDict[frameFileName]![dimension]!
                     }
-                    pref.append(self.seams![0])
+                    pref.append(self.seam!)
                     seamDict[frameFileName]![dimension] = pref
                     seamTime += timer3.stop()
                 }
 
                 // if cached, get current seam
                 else {
-                    self.seams = [precalculatedSeams[x]]
+                    self.seam = precalculatedSeams[x]
                     print("cache-hit")
                 }
 
-                // remove seams
+                // remove seam
                 let timer4 = ParkBenchTimer()
-                for seam in self.seams! {
-                    self.removeSeam(inputImage: self.frame!,seam: seam)
-                }
+                self.removeSeam(inputImage: self.frame!,seam: seam!)
                 seamRemovalTime += timer4.stop()
 
-                // set correct width/height
-                if dimension == "height" {
-                    self.width = self.width-seamAmountCurrent
-                }
-                if dimension == "width" {
-                    self.width = self.width-seamAmountCurrent
-                }
+                // set correct width (since it's the internal representation, it's width for both height and width carving)
+                self.width = self.width - 1
 
                 // set UI in main Thread
                 DispatchQueue.main.async {
@@ -577,11 +566,13 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             // shows seamMap of one iteration, only used for debugging and getting images for presentation
             //showSeamMap(seamMap: seamMap!)
         }
+
+        // set how much width was carved when dimension == "width", used in height carving for corner constraint calculation
         if(dimension == "width") {
-            carvedHeight = pixel - 1
+            carvedWidth = pixel - 1
         }
         else {
-            carvedHeight = 0
+            carvedWidth = 0
         }
 
         // encode dict to json and write it back (only written into file of sandboxed device, gets lost after a clean rebuild
@@ -600,7 +591,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         return outputImage
     }
 
-    func calculateSeamMap(energyMap: CGImage!, lastSeams: [[Int]]?){
+    func calculateSeamMap(energyMap: CGImage!, lastSeam: [Int]?){
         var map = [[CGFloat]](repeating: [CGFloat](repeating: 0, count: Int(width)), count: Int(height))
         for y in 0...(height-1) {
             for x in 0...(width-1) {
@@ -616,7 +607,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 }
                 var testY = y
                 if(y > height/2) {
-                    testY = testY + carvedHeight
+                    testY = testY + carvedWidth
                 }
 
                 // set seamMap to high value for not getting carved (alphaMap constraint)
@@ -695,53 +686,48 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
 
-    func calculateSeams(seamMap: [[CGFloat]]) -> [[Int]] {
+    func calculateSeam(seamMap: [[CGFloat]]) -> [Int] {
 
-        // returns arrays of length image.size.height where the value is the index
+        // returns array of length image.size.height where the value is the index
         // 0 <= x <= image.size.width with x being part of the seam
-        var seams = [[Int]](repeating: [Int](repeating: 0, count: height), count: seamAmountCurrent)
-        var lastIndicesToIgnore: [Int] = [Int](repeating: 0, count: seamAmountCurrent)
-        for i in 0..<seamAmountCurrent {
-            var seamIndex = [Int](repeating: 0, count: height)
 
-            // calculate start of seam from bottom
-            let y = height-1
+        var seam = [Int](repeating: 0, count: height)
+
+        // calculate start of seam from bottom
+        let y = height-1
+        var min = CGFloat.greatestFiniteMagnitude
+        var minIndex = -1
+        for x in 0...width-1 {
+            if(min > seamMap[y][x]) {
+                min = seamMap[y][x]
+                minIndex = x
+            }
+        }
+        seam[y] = minIndex
+        print(seam[y])
+
+        // calculate rest of seam by looking at the top neighbour values
+        for y in stride(from: height-2, through: 0, by: -1) {
+            let xValueOfSeamPartBelow = seam[y+1]
             var min = CGFloat.greatestFiniteMagnitude
             var minIndex = -1
-            for x in 0...width-1 {
-                if(min > seamMap[y][x] && !lastIndicesToIgnore.contains(x)) {
+            for x in xValueOfSeamPartBelow-1...xValueOfSeamPartBelow+1 {
+
+                // ignore all x values that are OOB
+                if(x <= -1) {
+                    continue
+                }
+                if(x >= width) {
+                    continue
+                }
+                if(min > seamMap[y][x]) {
                     min = seamMap[y][x]
                     minIndex = x
                 }
             }
-            seamIndex[y] = minIndex
-            lastIndicesToIgnore[i] = minIndex
-
-            // calculate rest of seam by looking at the top neighbour values
-            for y in stride(from: height-2, through: 0, by: -1) {
-                let xValueOfSeamPartBelow = seamIndex[y+1]
-                var min = CGFloat.greatestFiniteMagnitude
-                var minIndex = -1
-                for x in xValueOfSeamPartBelow-1...xValueOfSeamPartBelow+1 {
-
-                    // ignore all x values that are OOB
-                    if(x <= -1) {
-                        continue
-                    }
-                    if(x >= width) {
-                        continue
-                    }
-                    if(min > seamMap[y][x]) {
-                        min = seamMap[y][x]
-                        minIndex = x
-                    }
-                }
-                seamIndex[y] = minIndex
-            }
-            seams[i] = seamIndex
+            seam[y] = minIndex
         }
-        print(lastIndicesToIgnore)
-        return seams
+        return seam
     }
 
     // crops last column of given CGImage
