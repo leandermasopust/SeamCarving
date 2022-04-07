@@ -139,6 +139,17 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var seamTime = 0.0
     var seamRemovalTime = 0.0
 
+    // not every given frame image has clean (255,0,255) on filler part, that's why there is the following dict to lookup the constraint color per frame
+    var frameToRGBConstraint: Dictionary<String, [Int]> = [
+        "frame-1": [255,1,255],
+        "frame-2": [255,41,255],
+        "frame-4": [255,41,255],
+        "frame-5": [255,41,255],
+        "frame-6": [255,41,255],
+        "frame-7": [255,41,255],
+        "frame-8": [255,41,255]
+    ]
+
     override func viewDidLoad() {
         super.viewDidLoad()
         self.hideKeyboardWhenTappedAround()
@@ -239,7 +250,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         alphaMap! = newMatrix
     }
 
-    // calculate difference to carve by calculating (255,0,255) part of frame
+    // calculate difference to carve by calculating fill-constraint part of frame
     func calculateDifference() -> [Int] {
         var counterHeight = 0
         var counterWidth = 0
@@ -260,14 +271,17 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let r = rawData[byteIndex + 0]
             let g = rawData[byteIndex + 1]
             let b = rawData[byteIndex + 2]
+            let rConstraint = frameToRGBConstraint[frameFileName]![0]
+            let gConstraint = frameToRGBConstraint[frameFileName]![1]
+            let bConstraint = frameToRGBConstraint[frameFileName]![2]
             let column =  ((byteIndex / 4) % (bytesPerRow/4))
             let row = ((byteIndex - (column*4)) / bytesPerRow )
 
             // while key color and remains in same line, count for width
-            if(r >= 254 && g <= 1 && b >= 254 && row == 500) {
+            if(r == rConstraint && g == gConstraint && b == bConstraint && row == height/2) {
                 counterWidth += 1
             }
-            if(r >= 254 && g <= 1 && b >= 254 && column == 500) {
+            if(r == rConstraint && g == gConstraint && b == bConstraint && column == width/2) {
                 counterHeight += 1
             }
             byteIndex += 4
@@ -308,9 +322,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let r = rawData[byteIndex + 0]
             let g = rawData[byteIndex + 1]
             let b = rawData[byteIndex + 2]
+            let rConstraint = frameToRGBConstraint[frameFileName]![0]
+            let gConstraint = frameToRGBConstraint[frameFileName]![1]
+            let bConstraint = frameToRGBConstraint[frameFileName]![2]
 
             // identify if pixel is to fill with image data
-            if(r > 250 && g < 50 && b > 250) {
+            if(r == rConstraint && g == gConstraint && b == bConstraint ) {
                 var originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
 
                 // skip end of row if bytesPerRow has overflow over width
@@ -351,14 +368,32 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let yReductionInput = difference[1]
 
         // checks for faulty input
-        if (imageView.image?.cgImage == nil){return}
-        if (xReductionInput < 0) {return}
-        if (yReductionInput < 0) {return}
-        if (Int(imageView.image!.size.width) - xReductionInput <= 1) {return}
-        if (Int(imageView.image!.size.height) - yReductionInput <= 1) {return}
+        if (imageView.image?.cgImage == nil){
+            print("No input image given")
+            return
+        }
+        if (xReductionInput < 0) {
+            print("Negative width reduction input")
+            return
+        }
+        if (yReductionInput < 0) {
+            print("Negative height reduction input")
+            return
+        }
+        if (Int(imageView.image!.size.width) - xReductionInput <= 1) {
+            print("Frame width too small for given input image")
+            return
+        }
+        if (Int(imageView.image!.size.height) - yReductionInput <= 1) {
+            print("Frame height too small for given input image")
+            return
+        }
 
         // return if there is nothing to carve
-        if (xReductionInput + yReductionInput <= 0) {return}
+        if (xReductionInput + yReductionInput <= 0) {
+            print("Nothing to carve")
+            return
+        }
 
         DispatchQueue(label: "l").async {
 
