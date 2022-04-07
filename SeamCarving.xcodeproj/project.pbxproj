@@ -9,13 +9,15 @@
 /* Begin PBXBuildFile section */
 		4D2068EE27480B6A00EB2982 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2068ED27480B6A00EB2982 /* AppDelegate.swift */; };
 		4D2068F027480B6A00EB2982 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2068EF27480B6A00EB2982 /* SceneDelegate.swift */; };
-		4D2068F227480B6A00EB2982 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2068F127480B6A00EB2982 /* ViewController.swift */; };
 		4D2068F527480B6A00EB2982 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D2068F327480B6A00EB2982 /* Main.storyboard */; };
 		4D2068F727480B6B00EB2982 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4D2068F627480B6B00EB2982 /* Assets.xcassets */; };
 		4D2068FA27480B6B00EB2982 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D2068F827480B6B00EB2982 /* LaunchScreen.storyboard */; };
 		4D20690527480B6B00EB2982 /* SeamCarvingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D20690427480B6B00EB2982 /* SeamCarvingTests.swift */; };
 		4D20690F27480B6B00EB2982 /* SeamCarvingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D20690E27480B6B00EB2982 /* SeamCarvingUITests.swift */; };
 		4D20691127480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D20691027480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift */; };
+		4D6DD43227E3DDE000656D7D /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2068F127480B6A00EB2982 /* ViewController.swift */; };
+		4D6DD43527EFA1B600656D7D /* precalculatedSeams.json in Resources */ = {isa = PBXBuildFile; fileRef = 4D6DD43427EFA1B600656D7D /* precalculatedSeams.json */; };
+		4D6DD43627EFDD7F00656D7D /* precalculatedSeams.json in Resources */ = {isa = PBXBuildFile; fileRef = 4D6DD43427EFA1B600656D7D /* precalculatedSeams.json */; };
 		4D9FBB7C27498A0F0085E339 /* kernel.metal in Sources */ = {isa = PBXBuildFile; fileRef = 4D9FBB7B27498A0F0085E339 /* kernel.metal */; };
 /* End PBXBuildFile section */
 
@@ -50,6 +52,7 @@
 		4D20690A27480B6B00EB2982 /* SeamCarvingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeamCarvingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D20690E27480B6B00EB2982 /* SeamCarvingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeamCarvingUITests.swift; sourceTree = "<group>"; };
 		4D20691027480B6B00EB2982 /* SeamCarvingUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeamCarvingUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		4D6DD43427EFA1B600656D7D /* precalculatedSeams.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = precalculatedSeams.json; sourceTree = "<group>"; };
 		4D9FBB7B27498A0F0085E339 /* kernel.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = kernel.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -108,6 +111,7 @@
 				4D2068F327480B6A00EB2982 /* Main.storyboard */,
 				4D2068F627480B6B00EB2982 /* Assets.xcassets */,
 				4D2068F827480B6B00EB2982 /* LaunchScreen.storyboard */,
+				4D6DD43427EFA1B600656D7D /* precalculatedSeams.json */,
 				4D2068FB27480B6B00EB2982 /* Info.plist */,
 			);
 			path = SeamCarving;
@@ -235,6 +239,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D2068FA27480B6B00EB2982 /* LaunchScreen.storyboard in Resources */,
+				4D6DD43527EFA1B600656D7D /* precalculatedSeams.json in Resources */,
 				4D2068F727480B6B00EB2982 /* Assets.xcassets in Resources */,
 				4D2068F527480B6A00EB2982 /* Main.storyboard in Resources */,
 			);
@@ -251,6 +256,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D6DD43627EFDD7F00656D7D /* precalculatedSeams.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,8 +268,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D9FBB7C27498A0F0085E339 /* kernel.metal in Sources */,
-				4D2068F227480B6A00EB2982 /* ViewController.swift in Sources */,
 				4D2068EE27480B6A00EB2982 /* AppDelegate.swift in Sources */,
+				4D6DD43227E3DDE000656D7D /* ViewController.swift in Sources */,
 				4D2068F027480B6A00EB2982 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
