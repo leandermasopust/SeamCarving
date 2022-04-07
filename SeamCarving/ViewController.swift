@@ -140,7 +140,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var seamRemovalTime = 0.0
 
     // not every given frame image has clean (255,0,255) on filler part, that's why there is the following dict to lookup the constraint color per frame
-    var frameToRGBConstraint: Dictionary<String, [Int]> = [
+    let frameToRGBConstraint: Dictionary<String, [Int]> = [
         "frame-1": [255,1,255],
         "frame-2": [255,41,255],
         "frame-4": [255,41,255],
@@ -266,14 +266,19 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         context.draw(frame!, in: CGRect(x: 0, y: 0, width: width, height: height))
 
         var byteIndex = 0
+
         // Iterate through pixels
         while byteIndex < dataSize {
+
+            // extract rgb of current pixel and get constraint rgb from global dict
             let r = rawData[byteIndex + 0]
             let g = rawData[byteIndex + 1]
             let b = rawData[byteIndex + 2]
             let rConstraint = frameToRGBConstraint[frameFileName]![0]
             let gConstraint = frameToRGBConstraint[frameFileName]![1]
             let bConstraint = frameToRGBConstraint[frameFileName]![2]
+
+            // get row and column of current pixel
             let column =  ((byteIndex / 4) % (bytesPerRow/4))
             let row = ((byteIndex - (column*4)) / bytesPerRow )
 
@@ -286,6 +291,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             }
             byteIndex += 4
         }
+
+        // substract input dimensions from constraint part dimensions
         counterWidth -= image!.width
         counterHeight -= image!.height
         return [counterWidth, counterHeight]
@@ -319,6 +326,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         // Iterate through pixels
         while byteIndex < dataSize {
 
+            // extract rgb of current pixel and get constraint rgb from global dict
             let r = rawData[byteIndex + 0]
             let g = rawData[byteIndex + 1]
             let b = rawData[byteIndex + 2]
