@@ -124,7 +124,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var alphaMap: [[UInt8]]? = nil
 
     // file name of frame that is supposed to be carved
-    var frameFileName: String = "frame-8"
+    var frameFileName: String = "frame-1"
 
     // single, global instance of EnergyMapFilter
     var filter = EnergyMapFilter()
