@@ -26,3 +26,7 @@
 - seam caching for carving only works correctly, if the cached seams have the same length as the current image height:
     - thus height carving rarely hits the cache, since the width of the image that was used for the seam caching after width carving would have to be the same as the width of the current image after width carving (i recognized that issue after the presentation)
     - no issues for caching in width carving
+
+- there are issues with "frame-8", some parts of the frame have the same color as the constraint color
+
+- replacing the constraint part-to-fill only works without distortion if the given image is coded with 4x8 Bit per Pixel as RGBA
