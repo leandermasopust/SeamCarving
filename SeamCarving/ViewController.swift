@@ -477,18 +477,24 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         var cached = false
         var precalculatedSeams: [[Int]] = []
 
-        // read precalculatedSeams from json, get from Bundle at after first build
+        // read precalculatedSeams from json
         let jsonURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("precalculatedSeams.json")
         let jsonURLBundle = Bundle.main.path(forResource: "precalculatedSeams", ofType: "json")
         var jsonData: Data = Data()
+
+        // try to get local json, if not existing, fetch json out of bundle (first time usage only)
         do {
             jsonData = try Data(contentsOf: jsonURL)
         } catch {
             jsonData = try! Data(contentsOf: URL(fileURLWithPath: jsonURLBundle!))
         }
         let jsonDecoder = JSONDecoder()
+
+        // decode json into dict
         var seamDict = try! jsonDecoder.decode([String: [String:[[Int]]]].self, from: jsonData)
-        if seamDict[frameFileName] != nil{
+
+        // check if current frame + dimension is already (partially) precalculated
+        if seamDict[frameFileName] != nil {
             if seamDict[frameFileName]![dimension] != nil {
                 cached = true
                 precalculatedSeams = seamDict[frameFileName]![dimension]!
@@ -507,7 +513,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 cached = false
             }
 
-            // release memory early to avoid memoryoverflow
+            // release memory early to avoid memory overflow
             autoreleasepool {
 
                 // calculate seamMap, energyMap, seam if not cached or if seam length doesn't match the height of the CGImage
@@ -527,6 +533,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     // calculate seam
                     let timer3 = ParkBenchTimer()
                     self.seam = self.calculateSeam(seamMap: self.seamMap!)
+
+                    // append seam to seam dict
                     var pref: [[Int]] = []
                     if(seamDict[frameFileName]![dimension] != nil) {
                         pref = seamDict[frameFileName]![dimension]!

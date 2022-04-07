@@ -2,7 +2,7 @@
 
 ## notes for usage
 
-- replace `var frameFileName: String = "frame-1"` (line 111) with the file name of a frame within the Assets folder to select a specific frame
+- replace `var frameFileName: String = "frame-1"` (line 127) with the file name of a frame within the Assets folder to select a specific frame
 
 
 ## further comments
