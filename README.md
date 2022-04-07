@@ -14,6 +14,10 @@
         
 - currently only "frame-1" has cached seams in "precalculatedSeams.json" yet
 
+- good example image to try on: https://upload.wikimedia.org/wikipedia/commons/4/47/VU-Banana-1000x1000.png
+   - all example images that iOS provides are too large to fit into "frame-1"
+   - if input image is too large to fit into the frame, there will be a logging message and the "start carving" and "select image" buttons won't get disabled
+
 ## further comments
 
 - since the current png files of the frames have RGBA = (0,0,0,0) on every pixel with alpha = 0, i use two different frame representations:
