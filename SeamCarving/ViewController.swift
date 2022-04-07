@@ -124,7 +124,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var alphaMap: [[UInt8]]? = nil
 
     // file name of frame that is supposed to be carved
-    var frameFileName: String = "frame-1"
+    var frameFileName: String = "frame-8"
 
     // single, global instance of EnergyMapFilter
     var filter = EnergyMapFilter()
@@ -170,6 +170,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         self.dismiss(animated: true, completion: { () -> Void in})
 
         let image = UIImage(contentsOfFile: imageURL.path!)!
+
+        // WARNING: placing an image into the frame that is not formatted with 4 Bytes per Pixel (RGBA) will lead to a distorted result
+        if(image.cgImage!.bitsPerPixel != 32) {
+            print("WARNING, MIGHT LEAD TO WRONG RESULTS")
+        }
 
         // enable frame selection
         self.frameButton.isEnabled = true
@@ -338,7 +343,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let bConstraint = frameToRGBConstraint[frameFileName]![2]
 
             // identify if pixel is to fill with image data
-            if(r == rConstraint && g == gConstraint && b == bConstraint ) {
+            if(r == rConstraint && g == gConstraint && b == bConstraint) {
                 var originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
 
                 // skip end of row if bytesPerRow has overflow over width
