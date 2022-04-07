@@ -109,8 +109,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     var originalFrameWidth = 0
     var originalFrameHeight = 0
 
-    var frame: CGImage? = nil
     var img: CGImage? = nil
+    var imgInFrame: CGImage? = nil
 
     // seams, seamMap, energyMap of current iteration for global access
     var seams: [[Int]]? = nil
@@ -177,60 +177,52 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
     @IBAction func selectFrame() {
+            img = imageView.image!.cgImage!
+            self.frameFileName = "frame-1"
+            let f1 = UIImage.init(named:self.frameFileName)
+            let width2 = f1!.cgImage!.width
+            let height2 = f1!.cgImage!.height
 
-        // store selected image into img
-        self.img = imageView.image!.cgImage!
+            alphaMap = [[UInt8]](repeating: [UInt8](repeating: 0, count: width2), count: height2)
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            let bytesPerPixel:Int = 4
+            let bytesPerRow = 4 * width2
+            let bitsPerComponent = 8
+            let dataSize =  width2 * bytesPerPixel * height2
+            var rawData = [UInt8](repeating: 0, count: Int(dataSize))
+            let bitmapInfo = f1!.cgImage!.bitmapInfo.rawValue
+            let context = CGContext(data: &rawData, width: width2, height: height2, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+            context.draw(f1!.cgImage!, in: CGRect(x: 0, y: 0, width: width2, height: height2))
 
-        // load frame image
-        let f1 = UIImage.init(named:self.frameFileName)
-        originalFrameWidth = f1!.cgImage!.width
-        originalFrameHeight = f1!.cgImage!.height
-        self.alphaMap = [[UInt8]](repeating: [UInt8](repeating: 0, count: originalFrameWidth), count: originalFrameHeight)
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bytesPerPixel:Int = 4
-        let bytesPerRow = 4 * originalFrameWidth
-        let bitsPerComponent = 8
-        let dataSize =  originalFrameWidth * bytesPerPixel * originalFrameHeight
-        var rawData = [UInt8](repeating: 0, count: Int(dataSize))
-        let bitmapInfo = f1!.cgImage!.bitmapInfo.rawValue
-        let context = CGContext(data: &rawData, width: originalFrameWidth, height: originalFrameHeight, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
-        context.draw(f1!.cgImage!, in: CGRect(x: 0, y: 0, width: originalFrameWidth, height: originalFrameHeight))
+            var byteIndex = 0
 
-        var byteIndex = 0
+            // Iterate through pixels
+            while byteIndex < dataSize {
 
-        // Iterate through pixels
-        while byteIndex < dataSize {
+                // Get Column and Row of current pixel
+                let column =  ((byteIndex / 4) % (bytesPerRow/4))
+                let row = ((byteIndex - (column*4)) / bytesPerRow )
 
-            // Get Column and Row of current pixel
-            let column =  ((byteIndex / 4) % (bytesPerRow/4))
-            let row = ((byteIndex - (column*4)) / bytesPerRow )
+                // retrieve alpha channel for explicit pixel that are not to carve (a=255)
+                alphaMap![row][column] = rawData[byteIndex + 3]
 
-            // retrieve alpha channel for explicit pixel that are not to carve (a=255)
-            alphaMap![row][column] = rawData[byteIndex + 3]
-
-            byteIndex += 4
+                byteIndex += 4
+            }
+            let noalpha = UIImage.init(named:"frame-1-noalpha")
+            imageView.image = noalpha
+            imgInFrame = img!
+            img = noalpha!.cgImage!
+            width = img!.width
+            height = img!.height
+            labelX.text = "\(Int(imageView.image!.size.width))"
+            labelY.text = "\(Int(imageView.image!.size.height))"
+            seamMap = nil
+            seams = nil
+            energyMap = nil
+            prov = nil
+            self.carveButton.isEnabled = true
+            self.frameButton.isEnabled = false
         }
-
-        // load extra image without alpha information since the other .png files have RGBA = (0,0,0,0) everywhere, where alpha = 0. workaround for specific given frame files.
-        let noalpha = UIImage.init(named:(self.frameFileName + "-noalpha"))
-        imageView.image = noalpha
-        frame = noalpha!.cgImage!
-
-        // set global vars
-        width = frame!.width
-        height = frame!.height
-        labelX.text = "\(Int(imageView.image!.size.width))"
-        labelY.text = "\(Int(imageView.image!.size.height))"
-        self.carveButton.isEnabled = true
-        self.frameButton.isEnabled = false
-
-        // reset global vars in case they got written in earlier iterations
-        seamMap = nil
-        seams = nil
-        energyMap = nil
-        prov = nil
-
-    }
 
     // helper function to transpose alphaMap matrix
     func transposeAlphaMap(matrix: [[UInt8]]) {
@@ -245,42 +237,42 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     // calculate difference to carve by calculating (255,0,255) part of frame
     func calculateDifference() -> [Int] {
-        var counterHeight = 0
-        var counterWidth = 0
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bytesPerPixel:Int = 4
-        let bytesPerRow = 4 * width
-        let bitsPerComponent = 8
-        let dataSize =  width * bytesPerPixel * height
-        var rawData = [UInt8](repeating: 0, count: Int(dataSize))
-        let bitmapInfo = frame!.bitmapInfo.rawValue
-        let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
+            var counterHeight = 0
+            var counterWidth = 0
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            let bytesPerPixel:Int = 4
+            let bytesPerRow = 4 * width
+            let bitsPerComponent = 8
+            let dataSize =  width * bytesPerPixel * height
+            var rawData = [UInt8](repeating: 0, count: Int(dataSize))
+            let bitmapInfo = img!.bitmapInfo.rawValue
+            let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
 
-        context.draw(frame!, in: CGRect(x: 0, y: 0, width: width, height: height))
+            context.draw(img!, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        var byteIndex = 0
-        // Iterate through pixels
-        while byteIndex < dataSize {
-            let r = rawData[byteIndex + 0]
-            let g = rawData[byteIndex + 1]
-            let b = rawData[byteIndex + 2]
-            let column =  ((byteIndex / 4) % (bytesPerRow/4))
-            let row = ((byteIndex - (column*4)) / bytesPerRow )
+            var byteIndex = 0
+            // Iterate through pixels
+            while byteIndex < dataSize {
+                let r = rawData[byteIndex + 0]
+                let g = rawData[byteIndex + 1]
+                let b = rawData[byteIndex + 2]
+                let column =  ((byteIndex / 4) % (bytesPerRow/4))
+                let row = ((byteIndex - (column*4)) / bytesPerRow )
 
-            // key colors differ in given frame files (e.g. 254,1,254 in frame-1)
-            if(r > 250 && g < 50 && b > 250 && row == height/2) {
-                counterWidth += 1
+                // while key color and remains in same line, count for width
+                if(r >= 254 && g <= 1 && b >= 254 && row == height/2) {
+                    counterWidth += 1
+                }
+                if(r >= 254 && g <= 1 && b >= 254 && column == width/2) {
+                    counterHeight += 1
+                }
+                byteIndex += 4
             }
-            if(r > 250 && g < 50 && b > 250 && column == width/2) {
-                counterHeight += 1
-            }
-            byteIndex += 4
+            counterWidth -= imgInFrame!.width
+            counterHeight -= imgInFrame!.height
+            print([counterWidth, counterHeight])
+            return [counterWidth, counterHeight]
         }
-        counterWidth -= img!.width
-        counterHeight -= img!.height
-        print([counterWidth, counterHeight])
-        return [counterWidth, counterHeight]
-    }
 
     // replace placeholder part of frame with original image
     func placeImageInFrame() {
@@ -292,17 +284,17 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let bytesPerRow = 4 * width
         let dataSize =  width * bytesPerPixel * height
         var rawData = [UInt8](repeating: 0, count: Int(dataSize))
-        let bitmapInfo = frame!.bitmapInfo.rawValue
+        let bitmapInfo = img!.bitmapInfo.rawValue
         let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
 
         // context for image data
-        let bytesPerRowImg = 4 * img!.width
+        let bytesPerRowImg = 4 * imgInFrame!.width
         var rawDataImg = [UInt8](repeating: 0, count: Int(dataSize))
-        let bitmapInfoImg = img!.bitmapInfo.rawValue
-        let contextImg = CGContext(data: &rawDataImg, width: img!.width, height: img!.height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRowImg, space: colorSpace, bitmapInfo: bitmapInfoImg)!
+        let bitmapInfoImg = imgInFrame!.bitmapInfo.rawValue
+        let contextImg = CGContext(data: &rawDataImg, width: imgInFrame!.width, height: imgInFrame!.height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRowImg, space: colorSpace, bitmapInfo: bitmapInfoImg)!
 
-        context.draw(frame!, in: CGRect(x: 0, y: 0, width: width, height: height))
-        contextImg.draw(img!, in: CGRect(x: 0, y: 0, width: img!.width, height: img!.height))
+        context.draw(img!, in: CGRect(x: 0, y: 0, width: width, height: height))
+        contextImg.draw(imgInFrame!, in: CGRect(x: 0, y: 0, width: imgInFrame!.width, height: imgInFrame!.height))
 
         var byteIndex = 0
         var byteCounterImg = 0
@@ -319,7 +311,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 var originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
 
                 // skip end of row if bytesPerRow has overflow over width
-                while(originalImageColumn > img!.width) {
+                while(originalImageColumn > imgInFrame!.width) {
                     byteCounterImg += 4
                     originalImageColumn = ((byteCounterImg / 4) % (bytesPerRowImg/4))
                 }
@@ -335,11 +327,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         }
 
         // retrieve image from context
-        frame = context.makeImage()!
+        img = context.makeImage()!
 
         // set UI in main Thread
         DispatchQueue.main.async {
-            self.imageView.image =  UIImage(cgImage: self.frame!)
+            self.imageView.image =  UIImage(cgImage: self.img!)
             self.imageView.setNeedsDisplay()
         }
     }
@@ -347,8 +339,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     @IBAction func startCarving() {
 
         // set global variables
-        width = frame!.width
-        height = frame!.height
+        width = img!.width
+        height = img!.height
 
         // get number of pixels to carve for each dimension
         let xReductionInput = calculateDifference()[0]
@@ -378,7 +370,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             self.carveWidth(xReductionInput: xReductionInput)
             self.carveHeight(yReductionInput: yReductionInput)
             self.placeImageInFrame()
-            ImageSaver().writeToPhotoAlbum(image: self.imageView.image!)
+
             // dump time outputs
             print("The EnergyMap took \(self.energyMapTime) seconds.")
             print("The SeamMap took \(self.seamMapTime) seconds.")
@@ -388,6 +380,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
             // enable carve button and select button
             DispatchQueue.main.sync {
+                ImageSaver().writeToPhotoAlbum(image: self.imageView.image!)
                 self.carveButton.isEnabled = true
                 self.selectButton.isEnabled = true
                 self.frameButton.isEnabled = true
@@ -415,8 +408,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let y = imageView.frame.minY
 
             // rotate img 270° clockwise
-            let ci = CIImage(cgImage: frame!).oriented(.left)
-            frame = CIContext().createCGImage(ci, from: ci.extent)
+            let ci = CIImage(cgImage: img!).oriented(.left)
+            img = CIContext().createCGImage(ci, from: ci.extent)
 
             // rotate UIImageView 90° clockwise
             imageView.transform = imageView.transform.rotated(by: .pi / 2)
@@ -426,15 +419,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                                      width: imageView.frame.height, height: imageView.frame.width)
 
             // finally set the rotated image into the rotated imageView
-            imageView.image = UIImage(cgImage:frame!)
+            imageView.image = UIImage(cgImage:img!)
 
             // resetting global variables
             seamMap = nil
             seams = nil
             energyMap = nil
             prov = nil
-            width = frame!.width
-            height = frame!.height
+            width = img!.width
+            height = img!.height
         }
         self.startWidth = width
 
@@ -454,8 +447,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let y = imageView.frame.minY
 
             // rotate img 90° clockwise
-            let ci = CIImage(cgImage: frame!).oriented(.right)
-            frame = CIContext().createCGImage(ci, from: ci.extent)
+            let ci = CIImage(cgImage: img!).oriented(.right)
+            img = CIContext().createCGImage(ci, from: ci.extent)
 
             // rotate UIImageView 270° clockwise
             imageView.transform = imageView.transform.rotated(by: .pi * 1.5)
@@ -465,15 +458,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                                      width: imageView.frame.height, height: imageView.frame.width)
 
             // finally set the rotated image into the rotated imageView
-            self.imageView.image =  UIImage(cgImage: self.frame!)
+            self.imageView.image =  UIImage(cgImage: self.img!)
 
             // resetting global variables
             seamMap = nil
             seams = nil
             energyMap = nil
             prov = nil
-            width = frame!.width
-            height = frame!.height
+            width = img!.width
+            height = img!.height
         }
 
     }
@@ -503,6 +496,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         }
         // if frame seams were not precalculated, initialize that part of the dict
         if(seamDict[frameFileName] == nil) {
+            seamDict[frameFileName] = Dictionary<String, [[Int]]>()
+        }
+
+        if(seamDict[frameFileName]![dimension] == nil) {
             var dim = 0
             if(dimension == "width") {
                 dim = originalFrameHeight
@@ -511,7 +508,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 dim = originalFrameWidth
             }
             let map = [[Int]](repeating: [], count: dim)
-            seamDict[frameFileName] = Dictionary<String, [[Int]]>()
             seamDict[frameFileName]![dimension] = map
         }
 
@@ -525,15 +521,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             // release memory early to avoid memoryoverflow
             autoreleasepool {
                 seamAmountCurrent = min(seamAmount,  pixel - (startWidth - self.width))
-                var indexOfSeamDict = 0
-                if dimension == "width" {
-                    indexOfSeamDict = x
-                }
-                else {
-                    indexOfSeamDict = originalFrameWidth - height + x
-                }
-                // calculate seamMap, energyMap, seam if not cached
-                if(!cached || seamDict[frameFileName]![dimension]![indexOfSeamDict].count == 0) {
+
+                // calculate seamMap, energyMap, seam if not cached or if seam length doesn't match the height of the CGImage
+                if(!cached || seamDict[frameFileName]![dimension]![x].count == 0 || seamDict[frameFileName]![dimension]![x].count != height) {
 
                     // calculate energy map
                     let timer1 = ParkBenchTimer()
@@ -551,7 +541,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     self.seams = self.calculateSeams(seamMap: self.seamMap!)
                     var pref : [[Int]] = seamDict[frameFileName]![dimension]!
 
-                    pref[indexOfSeamDict] = self.seams![0]
+                    pref[x] = self.seams![0]
                     seamDict[frameFileName]![dimension] = pref
                     seamTime += timer3.stop()
                 }
@@ -564,7 +554,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 // remove seams
                 let timer4 = ParkBenchTimer()
                 for seam in self.seams! {
-                    self.removeSeam(inputImage: self.frame!,seam: seam)
+                    self.removeSeam(inputImage: self.img!,seam: seam)
                 }
                 seamRemovalTime += timer4.stop()
 
@@ -583,7 +573,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     if dimension == "width" {
                         self.labelX.text = "\(self.width)"
                     }
-                    self.imageView.image =  UIImage(cgImage: self.frame!)
+                    self.imageView.image =  UIImage(cgImage: self.img!)
                     self.imageView.setNeedsDisplay()
                 }
             }
@@ -609,7 +599,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
     func calculateEnergyMap() -> CGImage {
-        filter.inputImage = CIImage(cgImage: frame!)
+        filter.inputImage = CIImage(cgImage: img!)
         let outputImage = CIContext().createCGImage(filter.outputImage()!, from: filter.inputImage!.extent)!
         return outputImage
     }
@@ -695,7 +685,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         let bitsPerComponent = 8
         let dataSize =  width * bytesPerPixel * height
         var rawData = [UInt8](repeating: 0, count: Int(dataSize))
-        let bitmapInfo = frame!.bitmapInfo.rawValue
+        let bitmapInfo = img!.bitmapInfo.rawValue
         let context = CGContext(data: &rawData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo)!
 
         var byteIndex = 0
@@ -724,9 +714,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             rawData[byteIndex + 3] = UInt8(255)
             byteIndex += 4
         }
-        frame = context.makeImage()!
+        img = context.makeImage()!
         DispatchQueue.main.sync {
-            imageView.image =  UIImage(cgImage: frame!)
+            imageView.image =  UIImage(cgImage: img!)
         }
     }
 
@@ -847,6 +837,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             let imageCropped = cropLastColumn(image:resultImage)
 
             // write back carved frame to global var
-            frame = imageCropped
+            img = imageCropped
         }
 }
