@@ -35,6 +35,7 @@ class ParkBenchTimer {
         }
     }
 }
+
 // code snippet from SO to close keyboard when tapping around
 //https://stackoverflow.com/questions/24126678/close-ios-keyboard-by-touching-anywhere-using-swift
 extension UIViewController {
@@ -49,6 +50,8 @@ extension UIViewController {
     }
 }
 
+// code snippet form external source to save image back to gallery
+//https://www.hackingwithswift.com/books/ios-swiftui/how-to-save-images-to-the-users-photo-library
 class ImageSaver: NSObject {
     func writeToPhotoAlbum(image: UIImage) {
         UIImageWriteToSavedPhotosAlbum(image, self, #selector(saveCompleted), nil)
