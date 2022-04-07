@@ -166,8 +166,10 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     }
 
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]){
-        guard let image = info[.editedImage] as? UIImage else {return}
+        guard let imageURL = info[.imageURL] as? NSURL else {return}
         self.dismiss(animated: true, completion: { () -> Void in})
+
+        let image = UIImage(contentsOfFile: imageURL.path!)!
 
         // enable frame selection
         self.frameButton.isEnabled = true
@@ -295,6 +297,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         // substract input dimensions from constraint part dimensions
         counterWidth -= image!.width
         counterHeight -= image!.height
+        print([counterWidth, counterHeight])
         return [counterWidth, counterHeight]
     }
 
@@ -348,6 +351,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 rawData[byteIndex + 0] = rawDataImg[byteCounterImg + 0]
                 rawData[byteIndex + 1] = rawDataImg[byteCounterImg + 1]
                 rawData[byteIndex + 2] = rawDataImg[byteCounterImg + 2]
+                rawData[byteIndex + 3] = rawDataImg[byteCounterImg + 3]
 
                 byteCounterImg += 4
             }
@@ -359,7 +363,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
         // set UI in main Thread
         DispatchQueue.main.async {
-            self.imageView.image =  UIImage(cgImage: self.frame!)
+            self.imageView.image = UIImage(cgImage: self.frame!)
             self.imageView.setNeedsDisplay()
         }
     }
@@ -396,8 +400,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             print("Frame height too small for given input image")
             return
         }
-
-        // return if there is nothing to carve
         if (xReductionInput + yReductionInput <= 0) {
             print("Nothing to carve")
             return
@@ -415,6 +417,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             // start carving timer
             let timer = ParkBenchTimer()
 
+            // core algorithm
             self.carveWidth(xReductionInput: xReductionInput)
             self.carveHeight(yReductionInput: yReductionInput)
             self.placeImageInFrame()
@@ -481,7 +484,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         }
         self.startWidth = width
 
-        // reverse rows + transpose alphaMap so it maps back to img
+        // reverse rows + transpose alphaMap so it maps back to image
         for i in 0..<alphaMap!.count {
             alphaMap![i] = alphaMap![i].reversed()
         }
@@ -550,11 +553,21 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             }
         }
 
-        // if frame seams were not precalculated, initialize that part of the dict
+        // if frame seams were not precalculated or doesn't match height, initialize that part of the dict
         if(seamDict[frameFileName] == nil) {
             seamDict[frameFileName] = Dictionary<String, [[Int]]>()
         }
+        if(seamDict[frameFileName]![dimension] == nil) {
+            seamDict[frameFileName]![dimension] = []
+        }
+        if (seamDict[frameFileName]![dimension]!.count == 0) {
+            seamDict[frameFileName]![dimension] = []
+        }
+        else if(seamDict[frameFileName]![dimension]![0].count != height) {
+            seamDict[frameFileName]![dimension] = []
+        }
 
+        // loop over the amount of pixels to carve
         for x in 0..<pixel {
 
             // check if current seam isn't cached yet
@@ -565,8 +578,14 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             // release memory early to avoid memory overflow
             autoreleasepool {
 
+                // get length of cached seam if available
+                var seamLength = -1
+                if (seamDict[frameFileName]![dimension]!.count > x) {
+                    seamLength = seamDict[frameFileName]![dimension]![x].count
+                }
+
                 // calculate seamMap, energyMap, seam if not cached or if seam length doesn't match the height of the CGImage
-                if(!cached || seamDict[frameFileName]![dimension]![x].count == 0 || seamDict[frameFileName]![dimension]![x].count != height) {
+                if(!cached || seamLength != height) {
 
                     // calculate energy map
                     let timer1 = ParkBenchTimer()
@@ -584,10 +603,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                     self.seam = self.calculateSeam(seamMap: self.seamMap!)
 
                     // append seam to seam dict
-                    var pref: [[Int]] = []
-                    if(seamDict[frameFileName]![dimension] != nil) {
-                        pref = seamDict[frameFileName]![dimension]!
-                    }
+                    var pref = seamDict[frameFileName]![dimension]!
                     pref.append(self.seam!)
                     seamDict[frameFileName]![dimension] = pref
                     seamTime += timer3.stop()
@@ -604,7 +620,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 self.removeSeam(inputImage: self.frame!,seam: seam!)
                 seamRemovalTime += timer4.stop()
 
-                // set correct width (since it's the internal representation, it's width for both height and width carving)
+                // set correct width (since it's the internal CGImage width representation, it's width for both height and width carving)
                 self.width = self.width - 1
 
                 // set UI in main Thread
@@ -691,7 +707,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
         seamMap = map
     }
 
-    // visualize given seamMap
+    // helperfunction to visualize given seamMap, used for debugging and generating images for presentation
     func showSeamMap(seamMap: [[CGFloat]]) {
         var max = 0.0
         for x in 1...width-2 {
@@ -736,7 +752,11 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             rawData[byteIndex + 3] = UInt8(255)
             byteIndex += 4
         }
+
+        // retrieve image
         frame = context.makeImage()!
+
+        // show result in UI
         DispatchQueue.main.sync {
             imageView.image =  UIImage(cgImage: frame!)
         }
@@ -745,8 +765,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
 
     func calculateSeam(seamMap: [[CGFloat]]) -> [Int] {
 
-        // returns array of length image.size.height where the value is the index
-        // 0 <= x <= image.size.width with x being part of the seam
+        // returns array of length imageView.image.size.height where the values are the indices
+        // 0 <= x <= imageView.image.size.width with x being part of the seam
 
         var seam = [Int](repeating: 0, count: height)
 
@@ -784,6 +804,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             }
             seam[y] = minIndex
         }
+
         return seam
     }
 
